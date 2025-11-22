@@ -1,6 +1,7 @@
 # Project folders
 backups/
 data/
+runs/
 check.py
 .python-version
 

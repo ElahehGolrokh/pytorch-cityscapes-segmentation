@@ -1,0 +1,5 @@
+# Some training hyperparameters
+training:
+  epochs: 5
+  # Always include the background as a class
+  classes: 8
