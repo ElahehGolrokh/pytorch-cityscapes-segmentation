@@ -61,9 +61,9 @@ class Trainer:
             print(f"Created directory: {self.run_dir}")
 
     def _save_model(self, epoch: int, avg_val_iou: float):
-        model_path = self.run_dir / f'best_model_epoch{epoch}_{avg_val_iou:.4f}.pth'
+        model_path = self.run_dir / f'best_model_epoch{epoch+1}_{avg_val_iou:.4f}.pth'
         torch.save(self.model.state_dict(), model_path)
-        print(f"###### Congratulations ###### saved new best metric model to {model_path}")
+        print(f"###### Congratulations ###### saved new best metrisc model to {model_path}")
 
     def fit(self,):
         self._setup()
