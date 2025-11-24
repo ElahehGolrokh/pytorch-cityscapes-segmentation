@@ -93,7 +93,6 @@ class Trainer:
             self._validate(epoch)
             # Use get_last_lr() for PyTorch 1.4+ and later versions
             print('\n', f"###### epoch {epoch + 1} average loss: {epoch_loss:.4f}")
-            print('The learning rate updated to :', self.scheduler.get_last_lr()[0])
         print(f"train completed, best_metric: {self.best_metric:.4f} at epoch: {self.best_metric_epoch}")
 
     def _validate(self, epoch: int):
@@ -136,5 +135,6 @@ class Trainer:
                 self._save_model(epoch, avg_val_iou)
             else:
                 self.scheduler.step()
+                print('The learning rate updated to :', self.scheduler.get_last_lr()[0])
             print(f"current epoch: {epoch + 1} current IoU: {avg_val_iou:.4f}"
                   f" best IoU: {self.best_metric:.4f} at epoch: {self.best_metric_epoch}")
