@@ -4,6 +4,8 @@ import torch
 from omegaconf import OmegaConf
 from pathlib import Path
 
+from .model_building import ModelBuilder
+
 
 class Evaluator:
     def __init__(self,
@@ -37,15 +39,9 @@ class Evaluator:
         self.device = torch.device("cpu")
         print(f"Using {self.device} device")
 
-        encoder_name = self.config.training.encoder_name
-        activation = 'sigmoid' if self.num_classes == 1 else 'softmax'
-        self.model = smp.Unet(
-            encoder_name=encoder_name,        # choose encoder, e.g. mobilenet_v2 or efficientnet-b7
-            encoder_weights="imagenet",     # use `imagenet` pre-trained weights for encoder initialization
-            in_channels=3,                  # model input channels (1 for gray-scale images, 3 for RGB, etc.)
-            classes=self.num_classes,                     # model output classes (number of classes in your dataset)
-            activation=activation
-        ).to(self.device)
+        # Build the model
+        model_builder = ModelBuilder(self.config)
+        self.model = model_builder.build_model().to(self.device)
 
         # Load the saved state dictionary
         try:

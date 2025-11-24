@@ -5,6 +5,8 @@ import torch
 from omegaconf import OmegaConf
 from pathlib import Path
 
+from .model_building import ModelBuilder
+
 
 class Trainer:
     def __init__(self,
@@ -19,11 +21,10 @@ class Trainer:
 
     def _setup(self):
         # Setting up model parameters
-        encoder_name = self.config.training.encoder_name
         self.epochs = self.config.training.epochs
         learning_rate = self.config.training.initial_learning_rate
         loss = self.config.training.loss
-        self.num_classes = len(self.config.training.classes)
+        self.num_classes = len(self.config.dataset.classes)
         self.run_dir = Path(self.config.dirs.run)
         self._check_dir()
 
@@ -35,14 +36,9 @@ class Trainer:
         self.device = torch.device("cpu")
         print(f"Using {self.device} device")
 
-        activation = 'sigmoid' if self.num_classes == 1 else 'softmax'
-        self.model = smp.Unet(
-            encoder_name=encoder_name,        # choose encoder, e.g. mobilenet_v2 or efficientnet-b7
-            encoder_weights="imagenet",     # use `imagenet` pre-trained weights for encoder initialization
-            in_channels=3,                  # model input channels (1 for gray-scale images, 3 for RGB, etc.)
-            classes=self.num_classes,                     # model output classes (number of classes in your dataset)
-            activation=activation
-        ).to(self.device)
+        # Build the model
+        model_builder = ModelBuilder(self.config)
+        self.model = model_builder.build_model().to(self.device)
         self.model = self.model.float()
 
         if loss == "cross_entropy":
