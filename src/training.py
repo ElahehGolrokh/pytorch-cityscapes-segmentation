@@ -2,31 +2,58 @@ import numpy as np
 import segmentation_models_pytorch as smp
 import torch
 
+from omegaconf import OmegaConf
 from pathlib import Path
 
 
 class Trainer:
     def __init__(self,
+                 config: OmegaConf,
                  train_generator: torch.utils.data.DataLoader,
-                 val_generator: torch.utils.data.DataLoader,
-                 num_classes: int,
-                 model: torch.nn.Module,
-                 device: torch.device,
-                 optimizer: torch.optim.Optimizer,
-                 loss_function: torch.nn.Module,
-                 scheduler: torch.optim.lr_scheduler._LRScheduler,
-                 run_dir: Path = Path("runs"),):
+                 val_generator: torch.utils.data.DataLoader,):
+        self.config = config
         self.train_generator = train_generator
         self.val_generator = val_generator
-        self.run_dir = run_dir
-        self.num_classes = num_classes
-        self.model = model
-        self.device = device
-        self.optimizer = optimizer
-        self.loss_function = loss_function
-        self.scheduler = scheduler
         self._metric_values = []   # This will store average IoU for each epoch
         self._epoch_loss_values = []
+
+    def _setup(self):
+        # Setting up model parameters
+        encoder_name = self.config.training.encoder_name
+        self.epochs = self.config.training.epochs
+        learning_rate = self.config.training.initial_learning_rate
+        loss = self.config.training.loss
+        self.num_classes = len(self.config.training.classes)
+        self.run_dir = Path(self.config.dirs.run)
+        self._check_dir()
+
+        # Setting device
+        # try:
+        #     device = torch.device("cuda:0")
+        #     print('run with gpu')
+        # except:
+        self.device = torch.device("cpu")
+        print(f"Using {self.device} device")
+
+        activation = 'sigmoid' if self.num_classes == 1 else 'softmax'
+        self.model = smp.Unet(
+            encoder_name=encoder_name,        # choose encoder, e.g. mobilenet_v2 or efficientnet-b7
+            encoder_weights="imagenet",     # use `imagenet` pre-trained weights for encoder initialization
+            in_channels=3,                  # model input channels (1 for gray-scale images, 3 for RGB, etc.)
+            classes=self.num_classes,                     # model output classes (number of classes in your dataset)
+            activation=activation
+        ).to(self.device)
+        self.model = self.model.float()
+
+        if loss == "cross_entropy":
+            self.loss_function = torch.nn.CrossEntropyLoss()
+        elif loss == "focal_loss":
+            self.loss_function = smp.losses.FocalLoss()
+        else:
+            raise ValueError(f"Unknown loss function: {loss}")
+
+        self.optimizer = torch.optim.Adam(self.model.parameters(), learning_rate, weight_decay=0)
+        self.scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(self.optimizer, self.epochs)
 
     def _check_dir(self):
         if not self.run_dir.exists():
@@ -38,16 +65,14 @@ class Trainer:
         torch.save(self.model.state_dict(), model_path)
         print(f"###### Congratulations ###### saved new best metric model to {model_path}")
 
-    def fit(self,
-            epochs: int,
-            ):
+    def fit(self,):
+        self._setup()
         # Initialize with a value that will be easily surpassed
-        self._check_dir()
         self.best_metric = -1
         self.best_metric_epoch = -1
-        for epoch in range(epochs):
+        for epoch in range(self.epochs):
             print('-' * 10)
-            print(f"epoch {epoch + 1}/{epochs}")
+            print(f"epoch {epoch + 1}/{self.epochs}")
             self.model.train()
             epoch_loss = 0
             step = 0

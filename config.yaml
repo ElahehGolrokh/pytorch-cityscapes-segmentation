@@ -9,4 +9,4 @@ training:
   initial_learning_rate: 1e-3
   loss: "cross_entropy"
   # Always include the background as a class
-  classes: 8
+  classes: {background: 0, tree: 1, moving_car: 2, human: 3, building: 4, road: 5, low_vegetation: 6, static_car: 7}
