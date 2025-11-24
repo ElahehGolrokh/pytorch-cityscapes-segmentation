@@ -1,6 +1,12 @@
 
 dirs:
   run: "runs"
+  logs: "logs"
+
+# Add any other dataset-specific configurations here
+dataset:
+  # Always include the background as a class
+  classes: {background: 0, tree: 1, moving_car: 2, human: 3, building: 4, road: 5, low_vegetation: 6, static_car: 7}
 
 # Some training hyperparameters
 training:
@@ -9,5 +15,7 @@ training:
   encoder_name: "resnet18"
   initial_learning_rate: 1e-3
   loss: "cross_entropy"
-  # Always include the background as a class
-  classes: {background: 0, tree: 1, moving_car: 2, human: 3, building: 4, road: 5, low_vegetation: 6, static_car: 7}
+
+evaluation:
+  metrics: [iou, f1, precision, recall, accuracy]
+  reduction_mode: "micro"
