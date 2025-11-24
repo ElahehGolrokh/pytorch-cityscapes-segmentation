@@ -1,4 +1,3 @@
-import numpy as np
 import segmentation_models_pytorch as smp
 import torch
 
@@ -11,19 +10,22 @@ class Evaluator:
                  config: OmegaConf,
                  model_path: Path,
                  val_loader,
-                 save_flag: bool = True,
-                 output_name: str = "evaluation_metrics.txt"):
+                 output_name: str,
+                 save_flag: bool = True):
         self.config = config
         self.model_path = model_path
         self.val_loader = val_loader
         self.save_flag = save_flag
         self.output_name = output_name
+
+        self.reduction = self.config.evaluation.reduction_mode
+        self.num_classes = len(self.config.dataset.classes)
     
-    def run(self):
+    def run(self, *args):
         tp, fp, fn, tn = self._evaluate()
         metrics = self._claculate_metrics(tp, fp, fn, tn)
         if self.save_flag:
-            self._save_metrics(metrics)
+            self._save_metrics(metrics, *args)
     
     def _load_model(self):
         # Re-instantiate the model with the correct architecture
@@ -36,7 +38,6 @@ class Evaluator:
         print(f"Using {self.device} device")
 
         encoder_name = self.config.training.encoder_name
-        self.num_classes = len(self.config.dataset.classes)
         activation = 'sigmoid' if self.num_classes == 1 else 'softmax'
         self.model = smp.Unet(
             encoder_name=encoder_name,        # choose encoder, e.g. mobilenet_v2 or efficientnet-b7
@@ -91,36 +92,47 @@ class Evaluator:
         return tp, fp, fn, tn
     
     def _claculate_metrics(self, tp, fp, fn, tn):
-        reduction = self.config.evaluation.reduction_mode
         # Calculate metrics using the aggregated statistics
         # The `reduction` parameter applies to how the IoU is averaged across classes and/or images.
         # 'micro' means sum TP, FP, FN across classes and then calculate IoU.
-        iou_score = smp.metrics.iou_score(tp, fp, fn, tn, reduction=reduction)
-        f1_score = smp.metrics.f1_score(tp, fp, fn, tn, reduction=reduction) # Also known as Dice Coefficient
-        precision = smp.metrics.precision(tp, fp, fn, tn, reduction=reduction)
-        recall = smp.metrics.recall(tp, fp, fn, tn, reduction=reduction)
-        accuracy = smp.metrics.accuracy(tp, fp, fn, tn, reduction=reduction)
+        iou_score = smp.metrics.iou_score(tp, fp, fn, tn, reduction=self.reduction)
+        f1_score = smp.metrics.f1_score(tp, fp, fn, tn, reduction=self.reduction) # Also known as Dice Coefficient
+        precision = smp.metrics.precision(tp, fp, fn, tn, reduction=self.reduction)
+        recall = smp.metrics.recall(tp, fp, fn, tn, reduction=self.reduction)
+        accuracy = smp.metrics.accuracy(tp, fp, fn, tn, reduction=self.reduction)
 
-        print("\n--- Test Set Evaluation Metrics ---")
-        print(f"Mean IoU (macro): {iou_score.item():.4f}")
-        print(f"Mean F1-Score (macro, Dice): {f1_score.item():.4f}")
-        print(f"Mean Precision (macro): {precision.item():.4f}")
-        print(f"Mean Recall (macro): {recall.item():.4f}")
-        print(f"Mean Accuracy (macro): {accuracy.item():.4f}")
+        print(f"\n--- Test Set Evaluation Metrics, reduction mode: {self.reduction} ---")
+        print(f"Mean IoU: {iou_score.item():.4f}")
+        print(f"Mean F1-Score (Dice): {f1_score.item():.4f}")
+        print(f"Mean Precision: {precision.item():.4f}")
+        print(f"Mean Recall: {recall.item():.4f}")
+        print(f"Mean Accuracy: {accuracy.item():.4f}")
         print("-----------------------------------")
         return {'iou_score': iou_score,
                 'f1_score': f1_score,
                 'precision': precision,
                 'recall': recall,
                 'accuracy': accuracy}
-    
+
     def _save_metrics(self, metrics: dict, *args):
         logs_dir = self.config.dirs.logs
         Path(logs_dir).mkdir(parents=True, exist_ok=True)
-        # Save metrics to a file
         metrics_file = Path(logs_dir) / self.output_name
         with open(metrics_file, "w") as f:
-            f.write(f"Evaluation Metrics for {args}:\n")
+            f.write(f"---------------Evaluation Metrics for {self.reduction} mode---------------\n\n")
+            # Write config parameters passed as *args
+            # Only print configs if args contains at least one non-empty dict/item
+            if any((isinstance(item, dict) and item) or (not isinstance(item, dict)) for item in args):
+                f.write("Configs:\n")
+                for item in args:
+                    if isinstance(item, dict):
+                        for k, v in item.items():
+                            f.write(f"  {k.split('.')[-1]}: {v}\n")
+                    else:
+                        f.write(f"  {item}\n")
+                f.write("\n")
+                f.write("---------------Results---------------\n")
+
             for key, value in metrics.items():
                 f.write(f"{key}: {value.item():.4f}\n")
         print(f"Metrics saved to {metrics_file}")
