@@ -1,5 +1,12 @@
 # Some training hyperparameters
+dirs:
+  run: "runs"
+
 training:
   epochs: 5
+  batch_size: 8
+  encoder_name: "resnet18"
+  initial_learning_rate: 1e-3
+  loss: "cross_entropy"
   # Always include the background as a class
   classes: 8

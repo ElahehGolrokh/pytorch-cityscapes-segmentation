@@ -19,13 +19,15 @@ args = parser.parse_args()
 
 def main(config_path):
     config = OmegaConf.load(config_path)
+    batch_size = config.training.batch_size
     CLASSES = config.training.classes
+    encoder_name = config.training.encoder_name
     train_dir = os.path.join('data', 'train', 'train')
     val_dir = os.path.join('data', 'valid', 'valid')
 
     train_loader = DataGenerator(train_dir,
                                  phase="train",
-                                 batch_size=8,
+                                 batch_size=batch_size,
                                  shuffle=True).load_data()
     val_loader = DataGenerator(val_dir,
                                phase="val",
@@ -41,7 +43,7 @@ def main(config_path):
 
     activation = 'sigmoid' if CLASSES == 1 else 'softmax'
     model = smp.Unet(
-        encoder_name="resnet18",        # choose encoder, e.g. mobilenet_v2 or efficientnet-b7
+        encoder_name=encoder_name,        # choose encoder, e.g. mobilenet_v2 or efficientnet-b7
         encoder_weights="imagenet",     # use `imagenet` pre-trained weights for encoder initialization
         in_channels=3,                  # model input channels (1 for gray-scale images, 3 for RGB, etc.)
         classes=CLASSES,                     # model output classes (number of classes in your dataset)
@@ -50,11 +52,19 @@ def main(config_path):
     model = model.float()
 
     epoch_num = config.training.epochs
+    learning_rate = config.training.initial_learning_rate
+    loss = config.training.loss
 
-    steps = epoch_num#int(len(train_slices)/batch_size)+1
+    steps = epoch_num  #int(len(train_slices)/batch_size)+1
 
-    loss_function = torch.nn.CrossEntropyLoss()
-    optimizer = torch.optim.Adam(model.parameters(), 1e-3,weight_decay=0)
+    if loss == "cross_entropy":
+        loss_function = torch.nn.CrossEntropyLoss()
+    elif loss == "focal_loss":
+        loss_function = smp.losses.FocalLoss()
+    else:
+        raise ValueError(f"Unknown loss function: {loss}")
+
+    optimizer = torch.optim.Adam(model.parameters(), learning_rate, weight_decay=0)
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, steps)
 
     trainer = Trainer(
@@ -65,7 +75,8 @@ def main(config_path):
         device=device,
         optimizer=optimizer,
         loss_function=loss_function,
-        scheduler=scheduler
+        scheduler=scheduler,
+        run_dir=config.dirs.run
     )
 
     trainer.fit(epochs=epoch_num)

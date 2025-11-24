@@ -2,6 +2,8 @@ import numpy as np
 import segmentation_models_pytorch as smp
 import torch
 
+from pathlib import Path
+
 
 class Trainer:
     def __init__(self,
@@ -12,9 +14,11 @@ class Trainer:
                  device: torch.device,
                  optimizer: torch.optim.Optimizer,
                  loss_function: torch.nn.Module,
-                 scheduler: torch.optim.lr_scheduler._LRScheduler):
+                 scheduler: torch.optim.lr_scheduler._LRScheduler,
+                 run_dir: Path = Path("runs"),):
         self.train_generator = train_generator
         self.val_generator = val_generator
+        self.run_dir = run_dir
         self.num_classes = num_classes
         self.model = model
         self.device = device
@@ -24,10 +28,21 @@ class Trainer:
         self._metric_values = []   # This will store average IoU for each epoch
         self._epoch_loss_values = []
 
+    def _check_dir(self):
+        if not self.run_dir.exists():
+            self.run_dir.mkdir(parents=True)
+            print(f"Created directory: {self.run_dir}")
+
+    def _save_model(self, epoch: int, avg_val_iou: float):
+        model_path = self.run_dir / f'best_model_epoch{epoch}_{avg_val_iou:.4f}.pth'
+        torch.save(self.model.state_dict(), model_path)
+        print(f"###### Congratulations ###### saved new best metric model to {model_path}")
+
     def fit(self,
             epochs: int,
             ):
         # Initialize with a value that will be easily surpassed
+        self._check_dir()
         self.best_metric = -1
         self.best_metric_epoch = -1
         for epoch in range(epochs):
@@ -51,7 +66,6 @@ class Trainer:
 
             # Validation
             self._validate(epoch)
-            self.scheduler.step()
             # Use get_last_lr() for PyTorch 1.4+ and later versions
             print('\n', f"###### epoch {epoch + 1} average loss: {epoch_loss:.4f}")
             print('The learning rate updated to :', self.scheduler.get_last_lr()[0])
@@ -84,7 +98,7 @@ class Trainer:
                 # 'micro' means sum TP, FP, FN across classes and then calculate IoU.
                 batch_iou = smp.metrics.iou_score(
                     tp, fp, fn, tn,
-                    reduction='micro'
+                    reduction='macro'
                 )
                 val_iou_scores.append(batch_iou.item())
 
@@ -94,7 +108,8 @@ class Trainer:
             if avg_val_iou > self.best_metric:
                 self.best_metric = avg_val_iou
                 self.best_metric_epoch = epoch + 1
-                torch.save(self.model.state_dict(), f'best_model_epoch{epoch}_{avg_val_iou:.4f}.pth')
-                print('###### Congratulations ###### saved new best metric model')
+                self._save_model(epoch, avg_val_iou)
+            else:
+                self.scheduler.step()
             print(f"current epoch: {epoch + 1} current IoU: {avg_val_iou:.4f}"
-                    f" best IoU: {self.best_metric:.4f} at epoch: {self.best_metric_epoch}")
+                  f" best IoU: {self.best_metric:.4f} at epoch: {self.best_metric_epoch}")
