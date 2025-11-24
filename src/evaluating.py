@@ -143,7 +143,7 @@ class Evaluator:
         Path(logs_dir).mkdir(parents=True, exist_ok=True)
         metrics_file = Path(logs_dir) / self.output_name
         with open(metrics_file, "w") as f:
-            f.write(f"---------------Evaluation Metrics for {self.reduction} mode---------------\n\n")
+            f.write(f"---------------Evaluation Metrics---------------\n\n")
             # Write config parameters passed as *args
             # Only print configs if args contains at least one non-empty dict/item
             if any((isinstance(item, dict) and item) or (not isinstance(item, dict)) for item in args):
@@ -155,8 +155,12 @@ class Evaluator:
                     else:
                         f.write(f"  {item}\n")
                 f.write("\n")
-                f.write("---------------Results---------------\n")
-
+                f.write("-------------------Results-------------------\n")
             for key, value in metrics.items():
-                f.write(f"{key}: {value.item():.4f}\n")
+                f.write("---------------------------------------------\n")
+                f.write(f"Class = {key}\n")
+                for nest_key, nest_value in value.items():
+                    print(f"nests prints_{nest_key}: {nest_value:.4f}")
+                    f.write(f"{nest_key}: {nest_value:.4f}\n")
+            f.write("---------------------------------------------\n")
         print(f"Metrics saved to {metrics_file}")
