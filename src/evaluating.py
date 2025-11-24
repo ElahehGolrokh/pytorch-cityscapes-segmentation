@@ -95,24 +95,48 @@ class Evaluator:
         # Calculate metrics using the aggregated statistics
         # The `reduction` parameter applies to how the IoU is averaged across classes and/or images.
         # 'micro' means sum TP, FP, FN across classes and then calculate IoU.
-        iou_score = smp.metrics.iou_score(tp, fp, fn, tn, reduction=self.reduction)
-        f1_score = smp.metrics.f1_score(tp, fp, fn, tn, reduction=self.reduction) # Also known as Dice Coefficient
-        precision = smp.metrics.precision(tp, fp, fn, tn, reduction=self.reduction)
-        recall = smp.metrics.recall(tp, fp, fn, tn, reduction=self.reduction)
-        accuracy = smp.metrics.accuracy(tp, fp, fn, tn, reduction=self.reduction)
+        metrics = {}
+        for mode in self.reduction:
+            print(f'mode = {mode}')
+            iou_score = smp.metrics.iou_score(tp, fp, fn, tn, reduction=mode)
+            f1_score = smp.metrics.f1_score(tp, fp, fn, tn, reduction=mode)  # Also known as Dice Coefficient
+            precision = smp.metrics.precision(tp, fp, fn, tn, reduction=mode)
+            recall = smp.metrics.recall(tp, fp, fn, tn, reduction=mode)
+            accuracy = smp.metrics.accuracy(tp, fp, fn, tn, reduction=mode)
 
-        print(f"\n--- Test Set Evaluation Metrics, reduction mode: {self.reduction} ---")
-        print(f"Mean IoU: {iou_score.item():.4f}")
-        print(f"Mean F1-Score (Dice): {f1_score.item():.4f}")
-        print(f"Mean Precision: {precision.item():.4f}")
-        print(f"Mean Recall: {recall.item():.4f}")
-        print(f"Mean Accuracy: {accuracy.item():.4f}")
+            if mode == "none":
+                # reduction=None will get per-class metrics
+                class_names = list(self.config.dataset.classes.keys())
+                # reduction='none' returns shape [batch, classes]
+                per_class_iou = iou_score.mean(dim=0)
+                per_class_f1 = f1_score.mean(dim=0)
+                per_class_precision = precision.mean(dim=0)
+                per_class_recall = recall.mean(dim=0)
+                per_class_accuracy = accuracy.mean(dim=0)
+
+                for idx, cls in enumerate(class_names):
+                    metrics[cls] = {
+                        "iou_score": per_class_iou[idx].item(),
+                        "f1_score": per_class_f1[idx].item(),
+                        "precision": per_class_precision[idx].item(),
+                        "recall": per_class_recall[idx].item(),
+                        "accuracy": per_class_accuracy[idx].item(),
+                    }
+            else:
+                # global (reduced) metrics
+                metrics[f'{mode}_mean'] = {'iou_score': iou_score,
+                    'f1_score': f1_score,
+                    'precision': precision,
+                    'recall': recall,
+                    'accuracy': accuracy}
+                print(f"\n--- Test Set Evaluation Metrics, reduction mode: {mode} ---")
+                print(f"Mean IoU: {iou_score.item():.4f}")
+                print(f"Mean F1-Score (Dice): {f1_score.item():.4f}")
+                print(f"Mean Precision: {precision.item():.4f}")
+                print(f"Mean Recall: {recall.item():.4f}")
+                print(f"Mean Accuracy: {accuracy.item():.4f}")
         print("-----------------------------------")
-        return {'iou_score': iou_score,
-                'f1_score': f1_score,
-                'precision': precision,
-                'recall': recall,
-                'accuracy': accuracy}
+        return metrics
 
     def _save_metrics(self, metrics: dict, *args):
         logs_dir = self.config.dirs.logs

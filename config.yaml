@@ -18,4 +18,4 @@ training:
 
 evaluation:
   metrics: [iou, f1, precision, recall, accuracy]
-  reduction_mode: "macro"
+  reduction_mode: ["macro", "none"]
