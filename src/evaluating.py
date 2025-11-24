@@ -143,11 +143,11 @@ class Evaluator:
         Path(logs_dir).mkdir(parents=True, exist_ok=True)
         metrics_file = Path(logs_dir) / self.output_name
         with open(metrics_file, "w") as f:
-            f.write(f"---------------Evaluation Metrics---------------\n\n")
+            f.write(f"---------------EVALUATION METRICS---------------\n\n")
             # Write config parameters passed as *args
             # Only print configs if args contains at least one non-empty dict/item
             if any((isinstance(item, dict) and item) or (not isinstance(item, dict)) for item in args):
-                f.write("Configs:\n")
+                f.write("CONFIGS:\n")
                 for item in args:
                     if isinstance(item, dict):
                         for k, v in item.items():
