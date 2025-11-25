@@ -51,16 +51,6 @@ def get_transforms(phase, height, width):
 
 
 class SemanticSegmentationDataset(Dataset):
-    CLASSES = [
-        "Background",
-        "Tree",
-        "Moving car",
-        "Human",
-        "Building",
-        "Road",
-        "Low vegetation",
-        "Static car",
-    ]
     def __init__(self,
                  config: OmegaConf,
                  data_paths: Path,
