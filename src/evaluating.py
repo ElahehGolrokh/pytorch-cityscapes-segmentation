@@ -5,6 +5,7 @@ from omegaconf import OmegaConf
 from pathlib import Path
 
 from .model_building import ModelBuilder
+from .utils import set_device
 
 
 class Evaluator:
@@ -32,12 +33,7 @@ class Evaluator:
     def _load_model(self):
         # Re-instantiate the model with the correct architecture
         # Setting device
-        # try:
-        #     device = torch.device("cuda:0")
-        #     print('run with gpu')
-        # except:
-        self.device = torch.device("cpu")
-        print(f"Using {self.device} device")
+        self.device = set_device()
 
         # Build the model
         model_builder = ModelBuilder(self.config)
