@@ -5,7 +5,7 @@ import logging
 from omegaconf import OmegaConf
 from pathlib import Path
 
-from src.data_loader import DataGenerator
+from src.data_loader import DataGenerator, create_data_paths
 from src.evaluating import Evaluator
 from src.utils import get_config_value
 
@@ -47,10 +47,10 @@ def main(config_path,
     else:
         report_items = {}
     val_dir = os.path.join('data', 'valid', 'valid')
-    val_loader = DataGenerator(val_dir,
-                               phase="val",
-                               batch_size=len(os.listdir(val_dir)),
-                               shuffle=False).load_data()
+    paths = create_data_paths(val_dir)
+    val_loader = DataGenerator(phase="val",
+                               batch_size=len(paths),
+                               shuffle=False).load_data(paths)
 
     evaluator = Evaluator(
         config=config,
