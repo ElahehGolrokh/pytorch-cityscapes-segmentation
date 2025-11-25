@@ -49,7 +49,7 @@ class SceneSegmentor:
                 break
 
             # post-process the image
-            denormalized_image = denormalize_image(image)
+            denormalized_image = denormalize_image(self.config, image)
             # post-process the predicted mask
             CLASS_TO_COLOR = class_to_color(self.config)
             rgb_pred = decode_mask_for_plot(pr_mask.cpu().numpy(),

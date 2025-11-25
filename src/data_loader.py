@@ -66,13 +66,11 @@ class SemanticSegmentationDataset(Dataset):
                  data_paths: Path,
                  phase: str,
                  height=256,
-                 width=256,
-                 mean=(0.485, 0.456, 0.406),
-                 std=(0.229, 0.224, 0.225)):
+                 width=256,):
         self.config = config
         self.data_paths = data_paths
-        self.mean = mean
-        self.std = std
+        self.mean = tuple(config.dataset.mean)
+        self.std = tuple(config.dataset.std)
         self.transforms = get_transforms(phase, height, width)
         self.phase = phase
 
