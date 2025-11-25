@@ -5,11 +5,8 @@ import torch
 from omegaconf import OmegaConf
 from pathlib import Path
 
-from .utils import class_to_color, decode_mask_for_plot, load_model, set_device
-
-
-NORM_MEAN = torch.tensor([0.485, 0.456, 0.406])
-NORM_STD = torch.tensor([0.229, 0.224, 0.225])
+from .utils import class_to_color, decode_mask_for_plot, \
+    denormalize_image, load_model, set_device
 
 
 class SceneSegmentor:
@@ -47,29 +44,21 @@ class SceneSegmentor:
 
     def _visualize(self, images: torch.Tensor, pr_masks: torch.Tensor) -> None:
 
-        # Visualize a few samples (image and predicted mask)
         for idx, (image, pr_mask) in enumerate(zip(images, pr_masks)):
             if self.to_visualize_samples is not None and idx > self.to_visualize_samples:
                 break
 
-            plt.figure(figsize=(12, 6))
-
-            # Original Image
-            plt.subplot(1, 2, 1)
-            # Denormalize the image tensor for display
-            img_to_show_normalized = image.cpu() # Get a single image tensor and move to CPU
-            # NORM_MEAN and NORM_STD should be reshaped to (3, 1, 1) for broadcasting across channels
-            img_to_show_denormalized = img_to_show_normalized * NORM_STD.view(3, 1, 1) + NORM_MEAN.view(3, 1, 1)
-            # Clamp values to [0, 1] range to ensure valid display by matplotlib
-            img_to_show_clamped = torch.clamp(img_to_show_denormalized, 0, 1)
-            # Permute from (C, H, W) to (H, W, C) for matplotlib
-            img_to_show_np = (img_to_show_clamped.permute(1, 2, 0).numpy() * 255).astype(np.uint8)
-
+            # post-process the image
+            denormalized_image = denormalize_image(image)
+            # post-process the predicted mask
             CLASS_TO_COLOR = class_to_color(self.config)
             rgb_pred = decode_mask_for_plot(pr_mask.cpu().numpy(),
                                             CLASS_TO_COLOR)
-
-            plt.imshow(img_to_show_np)
+            
+            plt.figure(figsize=(12, 6))
+            # Original Image
+            plt.subplot(1, 2, 1)
+            plt.imshow(denormalized_image)
             plt.title("Image")
             plt.axis("off")
 

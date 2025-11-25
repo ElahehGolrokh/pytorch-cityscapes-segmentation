@@ -6,6 +6,10 @@ from omegaconf import OmegaConf
 from .model_building import ModelBuilder
 
 
+NORM_MEAN = torch.tensor([0.485, 0.456, 0.406])
+NORM_STD = torch.tensor([0.229, 0.224, 0.225])
+
+
 def color_to_class(config: OmegaConf) -> dict:
     """
     Maps a color (RGB) to its corresponding class index as follows:
@@ -59,6 +63,24 @@ def decode_mask_for_plot(class_mask, class_to_color):
     for cls, rgb in class_to_color.items():
         palette[cls] = rgb
     return palette[class_mask]
+
+
+def denormalize_image(image: torch.Tensor) -> torch.Tensor:
+    """
+    Denormalizes an image tensor using the specified mean and std.
+    Args:
+        image (torch.Tensor): The input image tensor (C, H, W).
+    Returns:
+        torch.Tensor: The denormalized image tensor (C, H, W).
+    """
+    img_to_show_normalized = image.cpu()
+    # NORM_MEAN and NORM_STD should be reshaped to (3, 1, 1) for broadcasting across channels
+    img_to_show_denormalized = img_to_show_normalized * NORM_STD.view(3, 1, 1) + NORM_MEAN.view(3, 1, 1)
+    # Clamp values to [0, 1] range to ensure valid display by matplotlib
+    img_to_show_clamped = torch.clamp(img_to_show_denormalized, 0, 1)
+    # Permute from (C, H, W) to (H, W, C) for matplotlib
+    img_to_show_np = (img_to_show_clamped.permute(1, 2, 0).numpy() * 255).astype(np.uint8)
+    return img_to_show_np
 
 
 def get_config_value(config, dotted_key: str):
