@@ -4,8 +4,7 @@ import torch
 from omegaconf import OmegaConf
 from pathlib import Path
 
-from .model_building import ModelBuilder
-from .utils import set_device
+from .utils import load_model, set_device
 
 
 class Evaluator:
@@ -29,27 +28,11 @@ class Evaluator:
         metrics = self._claculate_metrics(tp, fp, fn, tn)
         if self.save_flag:
             self._save_metrics(metrics, *args)
-    
-    def _load_model(self):
-        # Re-instantiate the model with the correct architecture
-        # Setting device
-        self.device = set_device()
-
-        # Build the model
-        model_builder = ModelBuilder(self.config)
-        self.model = model_builder.build_model().to(self.device)
-
-        # Load the saved state dictionary
-        try:
-            self.model.load_state_dict(torch.load(self.model_path,
-                                                  map_location=self.device))
-            print(f"Successfully loaded model from {self.model_path}")
-        except Exception as e:
-            raise ValueError(f"Error loading model state_dict: {e}\n"
-                             f"Ensure the path is correct and the model architecture matches.")
 
     def _evaluate(self):
-        self._load_model()
+        # Setting device
+        self.device = set_device()
+        self.model = load_model(self.model_path, self.config, self.device)
         self.model.eval()
         # Lists to store metrics for each batch
         tp_list, fp_list, fn_list, tn_list = [], [], [], []
