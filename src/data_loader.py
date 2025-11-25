@@ -1,4 +1,5 @@
 import cv2
+import numpy as np
 import os
 import torch
 # Ignore warnings
@@ -11,6 +12,16 @@ from torch.utils.data import Dataset, DataLoader
 
 from .preprocessing import Preprocessor
 
+
+def create_data_paths(dir):
+    data_paths = []
+    for seq in os.listdir(dir):
+        seq_dir_images = os.path.join(dir, seq, 'Images')
+        for files in os.listdir(seq_dir_images):
+            if files.endswith('.jpg') or files.endswith('.png'):
+                file_path = os.path.join(seq_dir_images, files)
+                data_paths.append(file_path)
+    return data_paths
 
 def get_transforms(phase, height, width):
     list_transforms = []
@@ -60,6 +71,7 @@ class SemanticSegmentationDataset(Dataset):
         self.mean = mean
         self.std = std
         self.transforms = get_transforms(phase, height, width)
+        self.phase = phase
 
     def __len__(self):
         return len(self.data_paths)
@@ -73,8 +85,15 @@ class SemanticSegmentationDataset(Dataset):
                                     mean=self.mean,
                                     std=self.std)
         image = preprocessor.preprocess_image()
-        mask = preprocessor.preprocess_mask()
-        # Removed: mask = mask.astype(float) to keep mask as integer type
+
+        if self.phase == "test":
+            # image = image.unsqueeze(0)  # Add batch dimension
+            # image = np.expand_dims(image, axis=0)
+            # mask = torch.zeros(1, image.shape[2], image.shape[3], dtype=torch.long)
+            mask = np.zeros((image.shape[0], image.shape[1]))
+        else:
+            mask = preprocessor.preprocess_mask()
+            # Removed: mask = mask.astype(float) to keep mask as integer type
 
         augmented = self.transforms(image=image, mask=mask)
         image = augmented['image']
@@ -87,30 +106,17 @@ class SemanticSegmentationDataset(Dataset):
 
 class DataGenerator:
     def __init__(self,
-                 dir: Path,
                  phase: str,
                  batch_size: int,
                  shuffle: bool):
-        self.dir = dir
         self.phase = phase
         self.batch_size = batch_size
         self.shuffle = shuffle
-    
-    def load_data(self):
-        paths = self._create_data_paths()
+
+    def load_data(self, paths: list):
         dataset = SemanticSegmentationDataset(paths, phase=self.phase)
         dataloader = DataLoader(dataset,
                                 batch_size=self.batch_size,
                                 shuffle=self.shuffle,
                                 num_workers=os.cpu_count())
         return dataloader
-
-    def _create_data_paths(self):
-        data_paths = []
-        for seq in os.listdir(self.dir):
-            seq_dir_images = os.path.join(self.dir, seq, 'Images')
-            for files in os.listdir(seq_dir_images):
-                if files.endswith('.jpg') or files.endswith('.png'):
-                    file_path = os.path.join(seq_dir_images, files)
-                    data_paths.append(file_path)
-        return data_paths
