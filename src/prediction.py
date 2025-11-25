@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import numpy as np
 import torch
 
 from omegaconf import OmegaConf
@@ -51,7 +52,6 @@ class SceneSegmentor:
             if self.to_visualize_samples is not None and idx > self.to_visualize_samples:
                 break
 
-            print('Visualizing sample:', idx)
             plt.figure(figsize=(12, 6))
 
             # Original Image
@@ -63,17 +63,18 @@ class SceneSegmentor:
             # Clamp values to [0, 1] range to ensure valid display by matplotlib
             img_to_show_clamped = torch.clamp(img_to_show_denormalized, 0, 1)
             # Permute from (C, H, W) to (H, W, C) for matplotlib
-            img_to_show_np = img_to_show_clamped.permute(1, 2, 0).numpy()
+            img_to_show_np = (img_to_show_clamped.permute(1, 2, 0).numpy() * 255).astype(np.uint8)
             plt.imshow(img_to_show_np)
             plt.title("Image")
             plt.axis("off")
 
             # Predicted Mask
             plt.subplot(1, 2, 2)
-            plt.imshow(pr_mask.cpu().numpy(), cmap="tab20")  # Visualize predicted mask
+            plt.imshow(pr_mask.cpu().numpy(), cmap="tab20")
             plt.title("Prediction")
             plt.axis("off")
-
-            # Show the figure
-            plt.savefig(f"visualization_{idx}.png")
+            
+            logs_dir = self.config.dirs.logs
+            Path(logs_dir).mkdir(parents=True, exist_ok=True)
+            plt.savefig(f"{logs_dir}/visualization_{idx}.png")
             plt.close()
