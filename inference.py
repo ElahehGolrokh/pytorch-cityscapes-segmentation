@@ -1,0 +1,34 @@
+import os
+import argparse
+
+from omegaconf import OmegaConf
+
+from src.data_loader import DataGenerator, create_data_paths
+from src.prediction import SceneSegmentor
+
+
+parser = argparse.ArgumentParser(description="Inference for a segmentation model")
+parser.add_argument("--config",
+                    type=str,
+                    default="config.yaml",
+                    help="Path to the config file")
+args = parser.parse_args()
+
+
+def main(config_path):
+    config = OmegaConf.load(config_path)
+
+    test_dir = os.path.join('data', 'test', 'test')
+    paths = create_data_paths(test_dir)
+    test_loader = DataGenerator(phase="test",
+                                batch_size=len(paths),
+                                shuffle=False).load_data(paths)
+    segmentor = SceneSegmentor(
+        config=config,
+        test_generator=test_loader,
+    )
+    segmentor.run()
+
+
+if __name__ == '__main__':
+    main(args.config)
