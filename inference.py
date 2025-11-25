@@ -2,6 +2,7 @@ import os
 import argparse
 
 from omegaconf import OmegaConf
+from pathlib import Path
 
 from src.data_loader import DataGenerator, create_data_paths
 from src.prediction import SceneSegmentor
@@ -23,8 +24,10 @@ def main(config_path):
     test_loader = DataGenerator(phase="test",
                                 batch_size=len(paths),
                                 shuffle=False).load_data(paths)
+    model_path=Path("runs/best_model.pth")
     segmentor = SceneSegmentor(
         config=config,
+        model_path=model_path,
         test_generator=test_loader,
     )
     segmentor.run()

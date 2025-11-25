@@ -2,9 +2,9 @@ import matplotlib.pyplot as plt
 import torch
 
 from omegaconf import OmegaConf
+from pathlib import Path
 
-from .model_building import ModelBuilder
-from .utils import set_device
+from .utils import load_model, set_device
 
 
 NORM_MEAN = torch.tensor([0.485, 0.456, 0.406])
@@ -14,17 +14,18 @@ NORM_STD = torch.tensor([0.229, 0.224, 0.225])
 class SceneSegmentor:
     def __init__(self,
                  config: OmegaConf,
+                 model_path: Path,
                  test_generator: torch.utils.data.DataLoader,
                  visualize: bool = True,
                  to_visualize_samples: int = None):
         self.config = config
-        self.device = set_device()
-        self.model = ModelBuilder(self.config).build_model().to(self.device)
+        self.model_path = model_path
         self.test_loader = test_generator
         self.visualize = visualize
         self.to_visualize_samples = to_visualize_samples
 
     def run(self) -> None:
+        self._setup()
         self.model.eval()
         with torch.no_grad():
             for test_batch in self.test_loader:
@@ -32,6 +33,10 @@ class SceneSegmentor:
                 pr_masks = self._predict(test_images)
         if self.visualize:
             self._visualize(test_images, pr_masks)
+    
+    def _setup(self):
+        self.device = set_device()
+        self.model = load_model(self.model_path, self.config, self.device)
 
     def _predict(self, test_images: torch.Tensor) -> torch.Tensor:
         test_outputs = self.model(test_images)  # Logits (Batch, Classes, H, W)
