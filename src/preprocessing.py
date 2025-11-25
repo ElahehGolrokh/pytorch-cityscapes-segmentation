@@ -2,25 +2,21 @@ import cv2
 import numpy as np
 import os
 
+from omegaconf import OmegaConf
 from pathlib import Path
+
+from .utils import color_to_class
 
 
 class Preprocessor():
-    COLOR_MAP = {(np.uint8(0), np.uint8(0), np.uint8(0)): 0,  # Background
-                 (np.uint8(0), np.uint8(128), np.uint8(0)): 1,  # Tree
-                 (np.uint8(64), np.uint8(0), np.uint8(128)): 2,  # Moving car
-                 (np.uint8(64), np.uint8(64), np.uint8(0)): 3,  # Human
-                 (np.uint8(128), np.uint8(0), np.uint8(0)): 4,  # Building
-                 (np.uint8(128), np.uint8(64), np.uint8(128)): 5,  # Road
-                 (np.uint8(128), np.uint8(128), np.uint8(0)): 6,  # Low vegetation
-                 (np.uint8(192), np.uint8(0), np.uint8(192)): 7}  # Static car
-
     def __init__(self,
+                 config: OmegaConf,
                  image_path: Path,
                  normalize_flag: bool = False,
                  mean: tuple = None,
                  std: tuple = None):
         self.image_path = image_path
+        self.config = config
         self.normalize_flag = normalize_flag
         self.mean = mean
         self.std = std
@@ -57,7 +53,7 @@ class Preprocessor():
         image = (image - mean) / std
         return image
 
-    def _rgb_to_gray(cls, rgb_label_array):
+    def _rgb_to_gray(self, rgb_label_array):
         """
         Converts a 3-channel RGB label image to a single-channel class ID mask.
 
@@ -67,8 +63,9 @@ class Preprocessor():
         Returns:
             np.ndarray: A single-channel (H, W) mask with integer class IDs.
         """
+        color_map = color_to_class(self.config)
         rgb_pixels_tuples = [tuple(p) for p in rgb_label_array.reshape(-1, 3)]
-        gray_mask = [cls.COLOR_MAP[rgb_pixels_tuples[i]] for i in range(len(rgb_pixels_tuples))]
+        gray_mask = [color_map[rgb_pixels_tuples[i]] for i in range(len(rgb_pixels_tuples))]
         gray_mask = np.array(gray_mask, dtype=np.uint8).reshape(rgb_label_array.shape[0],
                                                                 rgb_label_array.shape[1])
         return gray_mask

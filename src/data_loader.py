@@ -7,6 +7,7 @@ import warnings
 warnings.filterwarnings("ignore")
 
 from albumentations import (HorizontalFlip, ShiftScaleRotate, Resize, Compose, ToTensorV2)
+from omegaconf import OmegaConf
 from pathlib import Path
 from torch.utils.data import Dataset, DataLoader
 
@@ -61,12 +62,14 @@ class SemanticSegmentationDataset(Dataset):
         "Static car",
     ]
     def __init__(self,
+                 config: OmegaConf,
                  data_paths: Path,
                  phase: str,
                  height=256,
                  width=256,
                  mean=(0.485, 0.456, 0.406),
                  std=(0.229, 0.224, 0.225)):
+        self.config = config
         self.data_paths = data_paths
         self.mean = mean
         self.std = std
@@ -80,7 +83,8 @@ class SemanticSegmentationDataset(Dataset):
         if torch.is_tensor(idx):
             idx = idx.tolist()
         image_path = self.data_paths[idx]
-        preprocessor = Preprocessor(image_path=image_path,
+        preprocessor = Preprocessor(config=self.config,
+                                    image_path=image_path,
                                     normalize_flag=True,
                                     mean=self.mean,
                                     std=self.std)
@@ -106,15 +110,19 @@ class SemanticSegmentationDataset(Dataset):
 
 class DataGenerator:
     def __init__(self,
+                 config: OmegaConf,
                  phase: str,
                  batch_size: int,
                  shuffle: bool):
+        self.config = config
         self.phase = phase
         self.batch_size = batch_size
         self.shuffle = shuffle
 
     def load_data(self, paths: list):
-        dataset = SemanticSegmentationDataset(paths, phase=self.phase)
+        dataset = SemanticSegmentationDataset(data_paths=paths,
+                                              phase=self.phase,
+                                              config=self.config)
         dataloader = DataLoader(dataset,
                                 batch_size=self.batch_size,
                                 shuffle=self.shuffle,

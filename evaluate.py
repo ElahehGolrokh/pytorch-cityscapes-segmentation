@@ -48,7 +48,8 @@ def main(config_path,
         report_items = {}
     val_dir = os.path.join('data', 'valid', 'valid')
     paths = create_data_paths(val_dir)
-    val_loader = DataGenerator(phase="val",
+    val_loader = DataGenerator(config=config,
+                               phase="val",
                                batch_size=len(paths),
                                shuffle=False).load_data(paths)
 

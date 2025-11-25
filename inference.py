@@ -21,7 +21,8 @@ def main(config_path):
 
     test_dir = os.path.join('data', 'test', 'test')
     paths = create_data_paths(test_dir)
-    test_loader = DataGenerator(phase="test",
+    test_loader = DataGenerator(config=config,
+                                phase="test",
                                 batch_size=len(paths),
                                 shuffle=False).load_data(paths)
     model_path=Path("runs/best_model.pth")

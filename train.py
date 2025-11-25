@@ -25,10 +25,12 @@ def main(config_path):
     train_paths = create_data_paths(train_dir)
     val_paths = create_data_paths(val_dir)
 
-    train_loader = DataGenerator(phase="train",
+    train_loader = DataGenerator(config=config,
+                                 phase="train",
                                  batch_size=batch_size,
                                  shuffle=True).load_data(train_paths)
-    val_loader = DataGenerator(phase="val",
+    val_loader = DataGenerator(config=config,
+                               phase="val",
                                batch_size=len(val_paths),
                                shuffle=False).load_data(val_paths)
 
