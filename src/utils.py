@@ -54,6 +54,13 @@ def class_to_color(config: OmegaConf) -> dict:
     return CLASS_TO_COLOR
 
 
+def decode_mask_for_plot(class_mask, class_to_color):
+    palette = np.zeros((len(class_to_color), 3), dtype=np.uint8)
+    for cls, rgb in class_to_color.items():
+        palette[cls] = rgb
+    return palette[class_mask]
+
+
 def get_config_value(config, dotted_key: str):
     """Reads nested values like training.batch_size from OmegaConf."""
     try:

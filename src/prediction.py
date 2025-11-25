@@ -5,7 +5,7 @@ import torch
 from omegaconf import OmegaConf
 from pathlib import Path
 
-from .utils import load_model, set_device
+from .utils import class_to_color, decode_mask_for_plot, load_model, set_device
 
 
 NORM_MEAN = torch.tensor([0.485, 0.456, 0.406])
@@ -64,13 +64,18 @@ class SceneSegmentor:
             img_to_show_clamped = torch.clamp(img_to_show_denormalized, 0, 1)
             # Permute from (C, H, W) to (H, W, C) for matplotlib
             img_to_show_np = (img_to_show_clamped.permute(1, 2, 0).numpy() * 255).astype(np.uint8)
+
+            CLASS_TO_COLOR = class_to_color(self.config)
+            rgb_pred = decode_mask_for_plot(pr_mask.cpu().numpy(),
+                                            CLASS_TO_COLOR)
+
             plt.imshow(img_to_show_np)
             plt.title("Image")
             plt.axis("off")
 
             # Predicted Mask
             plt.subplot(1, 2, 2)
-            plt.imshow(pr_mask.cpu().numpy(), cmap="tab20")
+            plt.imshow(rgb_pred)
             plt.title("Prediction")
             plt.axis("off")
             
