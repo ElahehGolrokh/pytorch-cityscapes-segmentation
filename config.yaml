@@ -7,6 +7,15 @@ dirs:
 dataset:
   # Always include the background as a class
   classes: {background: 0, tree: 1, moving_car: 2, human: 3, building: 4, road: 5, low_vegetation: 6, static_car: 7}
+  color_map:
+    background: [0, 0, 0]
+    tree: [0, 128, 0]
+    moving_car: [64, 0, 128]
+    human: [64, 64, 0]
+    building: [128, 0, 0]
+    road: [128, 64, 128]
+    low_vegetation: [128, 128, 0]
+    static_car: [192, 0, 192]
 
 # Some training hyperparameters
 training:
