@@ -8,7 +8,15 @@ from .model_building import ModelBuilder
 
 def color_to_class(config: OmegaConf) -> dict:
     """
-    Maps a color (RGB) to its corresponding class index.
+    Maps a color (RGB) to its corresponding class index as follows:
+    COLOR_MAP = {(np.uint8(0), np.uint8(0), np.uint8(0)): 0,  # Background
+                 (np.uint8(0), np.uint8(128), np.uint8(0)): 1,  # Tree
+                 (np.uint8(64), np.uint8(0), np.uint8(128)): 2,  # Moving car
+                 (np.uint8(64), np.uint8(64), np.uint8(0)): 3,  # Human
+                 (np.uint8(128), np.uint8(0), np.uint8(0)): 4,  # Building
+                 (np.uint8(128), np.uint8(64), np.uint8(128)): 5,  # Road
+                 (np.uint8(128), np.uint8(128), np.uint8(0)): 6,  # Low vegetation
+                 (np.uint8(192), np.uint8(0), np.uint8(192)): 7}  # Static car
     Returns:
         COLOR_MAP: {(R,G,B): class_index}
     """
@@ -62,26 +70,7 @@ def load_model(model_path: str,
     model_builder = ModelBuilder(config)
     model = model_builder.build_model().to(device)
 
-    # Load the saved statdef build_color_mappings(config):
-    """
-    Returns:
-        COLOR_MAP: {(R,G,B): class_index}
-        CLASS_TO_COLOR: {class_index: np.array([R,G,B])}
-    """
-    class_to_id = config.dataset.classes
-    color_map_cfg = config.dataset.color_map
-
-    CLASS_TO_COLOR = {}
-    COLOR_MAP = {}
-
-    for class_name, class_idx in class_to_id.items():
-        rgb = color_map_cfg[class_name]
-        rgb_tuple = tuple(np.uint8(c) for c in rgb)
-
-        CLASS_TO_COLOR[class_idx] = np.array(rgb_tuple, dtype=np.uint8)
-        COLOR_MAP[rgb_tuple] = class_idx
-
-    return COLOR_MAP, CLASS_TO_COLORe dictionary
+    # Load the saved state dictionary
     try:
         model.load_state_dict(torch.load(model_path,
                                          map_location=device))
