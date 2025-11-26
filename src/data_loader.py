@@ -54,14 +54,14 @@ class SemanticSegmentationDataset(Dataset):
     def __init__(self,
                  config: OmegaConf,
                  data_paths: Path,
-                 phase: str,
-                 height=256,
-                 width=256,):
+                 phase: str):
         self.config = config
         self.data_paths = data_paths
         self.mean = tuple(config.dataset.mean)
         self.std = tuple(config.dataset.std)
-        self.transforms = get_transforms(phase, height, width)
+        self.height = config.dataset.height
+        self.width = config.dataset.width
+        self.transforms = get_transforms(phase, self.height, self.width)
         self.phase = phase
 
     def __len__(self):
