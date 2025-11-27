@@ -4,9 +4,9 @@ import os
 import torch
 # Ignore warnings
 import warnings
-warnings.filterwarnings("ignore")
 
-from albumentations import (HorizontalFlip, ShiftScaleRotate, Resize, Compose, ToTensorV2)
+from albumentations import (HorizontalFlip, ShiftScaleRotate,
+                            Resize, Compose, ToTensorV2)
 from omegaconf import OmegaConf
 from pathlib import Path
 from torch.utils.data import Dataset, DataLoader
@@ -14,7 +14,11 @@ from torch.utils.data import Dataset, DataLoader
 from .preprocessing import Preprocessor
 
 
-def create_data_paths(dir):
+warnings.filterwarnings("ignore")
+
+
+def create_data_paths(dir: Path) -> list[Path]:
+    """Creates a list of image file paths from the dataset directory."""
     data_paths = []
     for seq in os.listdir(dir):
         seq_dir_images = os.path.join(dir, seq, 'Images')
@@ -24,7 +28,11 @@ def create_data_paths(dir):
                 data_paths.append(file_path)
     return data_paths
 
-def get_transforms(phase, height, width):
+
+def get_transforms(phase: str,
+                   height: int,
+                   width: int) -> Compose:
+    """Returns the data augmentation using Albumentations."""
     list_transforms = []
     if phase == "train":
         list_transforms.extend(
@@ -37,7 +45,7 @@ def get_transforms(phase, height, width):
                     p=0.5,
                     border_mode=cv2.BORDER_CONSTANT
                 ),
-#                 GaussNoise(),
+                # GaussNoise(),
             ]
         )
     list_transforms.extend(
@@ -51,16 +59,43 @@ def get_transforms(phase, height, width):
 
 
 class SemanticSegmentationDataset(Dataset):
+    """
+    Custom dataset for semantic segmentation.
+
+    Parameters:
+    -----------
+        config (OmegaConf): The configuration object.
+        mean : float, optional
+            Overrides mean in config if provided.
+        std : float, optional
+            Overrides std in config if provided.
+        height : int, optional
+            Overrides height in config if provided.
+        width : int, optional
+            Overrides width in config if provided.
+        data_paths (Path): The paths to the image files.
+        phase (str): The phase of the data preparation (train, val, test).
+
+
+    """
     def __init__(self,
                  config: OmegaConf,
                  data_paths: Path,
-                 phase: str):
+                 phase: str,
+                 mean: float = None,
+                 std: float = None,
+                 height: int = None,
+                 width: int = None):
         self.config = config
+
+        # Parameters from config
+        self.mean = tuple(config.dataset.mean) if mean is None else (mean,)
+        self.std = tuple(config.dataset.std) if std is None else (std,)
+        self.height = config.dataset.height if height is None else height
+        self.width = config.dataset.width if width is None else width
+
+        # Data paths and transformations
         self.data_paths = data_paths
-        self.mean = tuple(config.dataset.mean)
-        self.std = tuple(config.dataset.std)
-        self.height = config.dataset.height
-        self.width = config.dataset.width
         self.transforms = get_transforms(phase, self.height, self.width)
         self.phase = phase
 
@@ -68,6 +103,7 @@ class SemanticSegmentationDataset(Dataset):
         return len(self.data_paths)
 
     def __getitem__(self, idx):
+        """Fetches image, mask pair for the given index."""
         if torch.is_tensor(idx):
             idx = idx.tolist()
         image_path = self.data_paths[idx]
@@ -79,9 +115,6 @@ class SemanticSegmentationDataset(Dataset):
         image = preprocessor.preprocess_image()
 
         if self.phase == "test":
-            # image = image.unsqueeze(0)  # Add batch dimension
-            # image = np.expand_dims(image, axis=0)
-            # mask = torch.zeros(1, image.shape[2], image.shape[3], dtype=torch.long)
             mask = np.zeros((image.shape[0], image.shape[1]))
         else:
             mask = preprocessor.preprocess_mask()
@@ -89,7 +122,7 @@ class SemanticSegmentationDataset(Dataset):
 
         augmented = self.transforms(image=image, mask=mask)
         image = augmented['image']
-        
+
         # Explicitly convert mask to LongTensor for CrossEntropyLoss
         mask = augmented['mask'].long()
 
@@ -97,6 +130,24 @@ class SemanticSegmentationDataset(Dataset):
 
 
 class DataGenerator:
+    """
+    Data generator for training, validation, and testing phases.
+
+    Parameters:
+    -----------
+        config (OmegaConf): The configuration object.
+        phase (str): The phase of the data preparation (train, val, test).
+        batch_size (int): The batch size for data loading.
+        shuffle (bool): Whether to shuffle the data.
+
+    Public Methods:
+    ----------------
+        load_data: Loads data for the specified phase.
+
+    Example:
+    >>> generator = DataGenerator(config, phase="train", batch_size=32, shuffle=True)
+    >>> dataloader = generator.load_data(train_image_paths)
+    """
     def __init__(self,
                  config: OmegaConf,
                  phase: str,
