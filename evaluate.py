@@ -1,6 +1,7 @@
 import os
 import argparse
 import logging
+import pandas as pd
 
 from omegaconf import OmegaConf
 from pathlib import Path
@@ -46,8 +47,10 @@ def main(config_path,
             report_items[key] = get_config_value(config, key)
     else:
         report_items = {}
-    val_dir = os.path.join('data', 'valid', 'valid')
-    paths = create_data_paths(val_dir)
+
+    val_dir = os.path.join('data', 'val', 'image')
+    val_df = pd.read_csv(os.path.join('data', 'val.csv'))
+    paths = create_data_paths(val_dir, val_df)
     val_loader = DataGenerator(config=config,
                                phase="val",
                                batch_size=len(paths),

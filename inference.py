@@ -1,5 +1,6 @@
-import os
 import argparse
+import os
+import pandas as pd
 
 from omegaconf import OmegaConf
 from pathlib import Path
@@ -19,8 +20,9 @@ args = parser.parse_args()
 def main(config_path):
     config = OmegaConf.load(config_path)
 
-    test_dir = os.path.join('data', 'test', 'test')
-    paths = create_data_paths(test_dir)
+    test_dir = os.path.join('data', 'test', 'image')
+    test_df = pd.read_csv(os.path.join('data', 'test.csv'))
+    paths = create_data_paths(test_dir, test_df)
     test_loader = DataGenerator(config=config,
                                 phase="test",
                                 batch_size=len(paths),

@@ -1,5 +1,6 @@
-import os
 import argparse
+import os
+import pandas as pd
 
 from omegaconf import OmegaConf
 
@@ -19,11 +20,14 @@ def main(config_path):
     config = OmegaConf.load(config_path)
     batch_size = config.training.batch_size
 
-    train_dir = os.path.join('data', 'train', 'train')
-    val_dir = os.path.join('data', 'valid', 'valid')
+    train_dir = os.path.join('data', 'train', 'image')
+    val_dir = os.path.join('data', 'val', 'image')
 
-    train_paths = create_data_paths(train_dir)
-    val_paths = create_data_paths(val_dir)
+    train_df = pd.read_csv(os.path.join('data', 'train.csv'))
+    val_df = pd.read_csv(os.path.join('data', 'val.csv'))
+
+    train_paths = create_data_paths(train_dir, train_df)
+    val_paths = create_data_paths(val_dir, val_df)
 
     train_loader = DataGenerator(config=config,
                                  phase="train",

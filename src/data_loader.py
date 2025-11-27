@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 import os
+import pandas as pd
 import torch
 # Ignore warnings
 import warnings
@@ -17,16 +18,13 @@ from .preprocessing import Preprocessor
 warnings.filterwarnings("ignore")
 
 
-def create_data_paths(dir: Path) -> list[Path]:
+def create_data_paths(dir: Path,
+                      df: pd.DataFrame) -> list[Path]:
     """Creates a list of image file paths from the dataset directory."""
-    data_paths = []
-    for seq in os.listdir(dir):
-        seq_dir_images = os.path.join(dir, seq, 'Images')
-        for files in os.listdir(seq_dir_images):
-            if files.endswith('.jpg') or files.endswith('.png'):
-                file_path = os.path.join(seq_dir_images, files)
-                data_paths.append(file_path)
-    return data_paths
+    df = pd.DataFrame(data=[os.path.join(dir, df['image_path'].values[i]) for i in range(len(df))],
+                      columns=['image_path'])
+
+    return df['image_path'].values.tolist()
 
 
 def get_transforms(phase: str,
