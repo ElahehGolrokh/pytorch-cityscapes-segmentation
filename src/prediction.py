@@ -4,7 +4,7 @@ import torch
 from omegaconf import OmegaConf
 from pathlib import Path
 
-from .utils import class_to_color, decode_mask_for_plot, \
+from .utils import decode_mask_for_plot, \
     denormalize_image, load_model, set_device
 
 
@@ -49,10 +49,6 @@ class SceneSegmentor:
 
             # post-process the image
             denormalized_image = denormalize_image(self.config, image)
-            # post-process the predicted mask
-            CLASS_TO_COLOR = class_to_color(self.config)
-            rgb_pred = decode_mask_for_plot(pr_mask.cpu().numpy(),
-                                            CLASS_TO_COLOR)
             
             plt.figure(figsize=(12, 6))
             # Original Image
@@ -63,7 +59,7 @@ class SceneSegmentor:
 
             # Predicted Mask
             plt.subplot(1, 2, 2)
-            plt.imshow(rgb_pred)
+            plt.imshow(pr_mask)
             plt.title("Prediction")
             plt.axis("off")
             
