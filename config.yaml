@@ -29,17 +29,17 @@ dataset:
     18: 10  # motorcycle
     19: 0  # bicycle  It seems there are no bikes in this dataset
   classes: 
-    0: 'background'
-    1: 'road'
-    2: 'structure'
-    3: 'traffic_sign'
-    4: 'vegetation'
-    5: 'terrain'
-    6: 'sky'
-    7: 'person'
-    8: 'car'
-    9: 'large_vehicle'
-    10: 'motorcycle'
+    'background': 0
+    'road': 1
+    'structure': 2
+    'traffic_sign': 3
+    'vegetation': 4
+    'terrain': 5
+    'sky': 6
+    'person': 7
+    'car': 8
+    'large_vehicle': 9
+    'motorcycle': 10
   mean: [0.485, 0.456, 0.406]
   std: [0.229, 0.224, 0.225]
   height: 128
