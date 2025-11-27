@@ -52,9 +52,9 @@ def main(config_path,
     test_df = pd.read_csv(os.path.join('data', 'test.csv'))
     paths = create_data_paths(test_dir, test_df)
     test_loader = DataGenerator(config=config,
-                               phase="test",
-                               batch_size=len(paths),
-                               shuffle=False).load_data(paths)
+                                phase="test",
+                                batch_size=len(paths),
+                                shuffle=False).load_data(paths)
 
     evaluator = Evaluator(
         config=config,

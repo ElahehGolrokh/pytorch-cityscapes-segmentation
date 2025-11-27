@@ -16,7 +16,7 @@ class Evaluator:
     -----------
         config (OmegaConf): The configuration object.
         model_path (Path): The path to the trained model.
-        val_loader (DataLoader): The validation data loader.
+        test_loader (DataLoader): The test data loader.
         save_flag (bool): Whether to save the evaluation results.
         output_name (str): The name of the output report.
         reduction (list): A list of the reduction modes for the evaluation metrics.
@@ -45,12 +45,12 @@ class Evaluator:
     def __init__(self,
                  config: OmegaConf,
                  model_path: Path,
-                 val_loader: DataLoader,
+                 test_loader: DataLoader,
                  output_name: str,
                  save_flag: bool = True):
         self.config = config
         self.model_path = model_path
-        self.val_loader = val_loader
+        self.test_loader = test_loader
         self.save_flag = save_flag
         self.output_name = output_name
 
@@ -85,19 +85,19 @@ class Evaluator:
         # Lists to store metrics for each batch
         tp_list, fp_list, fn_list, tn_list = [], [], [], []
         with torch.no_grad():
-            for val_data_batch in self.val_loader:
-                val_images, val_labels = val_data_batch[0].to(self.device_).float(), val_data_batch[1].to(self.device_)
-                val_outputs = self.model_(val_images)  # Logits (Batch, Classes, H, W)
+            for test_data_batch in self.test_loader:
+                test_images, test_labels = test_data_batch[0].to(self.device_).float(), test_data_batch[1].to(self.device_)
+                test_outputs = self.model_(test_images)  # Logits (Batch, Classes, H, W)
 
                 # Convert logits to predicted class labels
-                pr_masks = val_outputs.softmax(dim=1).argmax(dim=1)  # Shape: [batch_size, H, W]
+                pr_masks = test_outputs.softmax(dim=1).argmax(dim=1)  # Shape: [batch_size, H, W]
 
                 # Calculate TP, FP, FN, TN for multiclass
                 # The `get_stats` function computes a confusion matrix for each image/batch
                 # and returns summed tp, fp, fn, tn.
                 tp, fp, fn, tn = smp.metrics.get_stats(
                     pr_masks,  # Predicted mask (argmaxed)
-                    val_labels,  # Ground truth mask
+                    test_labels,  # Ground truth mask
                     mode='multiclass',
                     num_classes=self.num_classes,  # Number of classes (including background)
                     ignore_index=None,  # Set an index if you want to ignore a specific class
