@@ -20,13 +20,18 @@ warnings.filterwarnings("ignore")
 
 def create_data_paths(dir: Path,
                       df: pd.DataFrame) -> list[Path]:
-    """Creates a list of image file paths from the dataset directory."""
+    """Creates a list of image files from the dataset directory."""
     df = pd.DataFrame(data=[os.path.join(dir, df['image_path'].values[i]) for i in range(len(df))],
                       columns=['image_path'])
     return df['image_path'].values.tolist()
 
 
-def encode_labels(mask, mapping_dict):
+def encode_labels(mask: np.ndarray, mapping_dict: dict) -> np.ndarray:
+    """
+    Encodes the labels in the mask using the mapping dictionary.
+    This function converts the original label values (-1 to 19) to the new
+    values defined in the mapping dictionary from 0 to 10.
+    """
     label_mask = np.zeros_like(mask)
     for k in mapping_dict.keys():
         label_mask[mask == k] = mapping_dict[k]
@@ -162,7 +167,10 @@ class DataGenerator:
         self.batch_size = batch_size
         self.shuffle = shuffle
 
-    def load_data(self, paths: list):
+    def load_data(self, paths: list) -> DataLoader:
+        """
+        Loads data for the specified phase.
+        """
         dataset = SemanticSegmentationDataset(data_paths=paths,
                                               phase=self.phase,
                                               config=self.config)

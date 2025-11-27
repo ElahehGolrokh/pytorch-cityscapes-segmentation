@@ -27,7 +27,7 @@ def main(config_path):
                                 phase="test",
                                 batch_size=len(paths),
                                 shuffle=False).load_data(paths)
-    model_path=Path("runs/best_model_epoch76_0.6119.pth")
+    model_path = Path("runs/best_model_epoch76_0.6119.pth")
     segmentor = SceneSegmentor(
         config=config,
         model_path=model_path,

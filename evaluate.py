@@ -1,6 +1,6 @@
-import os
 import argparse
 import logging
+import os
 import pandas as pd
 
 from omegaconf import OmegaConf
@@ -11,7 +11,7 @@ from src.evaluating import Evaluator
 from src.utils import get_config_value
 
 
-parser = argparse.ArgumentParser(description="Train a segmentation model")
+parser = argparse.ArgumentParser(description="Evaluate a segmentation model")
 parser.add_argument("--config",
                     type=str,
                     default="config.yaml",
@@ -48,18 +48,18 @@ def main(config_path,
     else:
         report_items = {}
 
-    val_dir = os.path.join('data', 'val', 'image')
-    val_df = pd.read_csv(os.path.join('data', 'val.csv'))
-    paths = create_data_paths(val_dir, val_df)
-    val_loader = DataGenerator(config=config,
-                               phase="val",
+    test_dir = os.path.join('data', 'test', 'image')
+    test_df = pd.read_csv(os.path.join('data', 'test.csv'))
+    paths = create_data_paths(test_dir, test_df)
+    test_loader = DataGenerator(config=config,
+                               phase="test",
                                batch_size=len(paths),
                                shuffle=False).load_data(paths)
 
     evaluator = Evaluator(
         config=config,
         model_path=Path("runs/best_model_epoch76_0.6119.pth"),
-        val_loader=val_loader,
+        test_loader=test_loader,
         output_name=output_name,
         save_flag=save_flag
     )
