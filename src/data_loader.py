@@ -23,8 +23,14 @@ def create_data_paths(dir: Path,
     """Creates a list of image file paths from the dataset directory."""
     df = pd.DataFrame(data=[os.path.join(dir, df['image_path'].values[i]) for i in range(len(df))],
                       columns=['image_path'])
-
     return df['image_path'].values.tolist()
+
+
+def encode_labels(mask, mapping_dict):
+    label_mask = np.zeros_like(mask)
+    for k in mapping_dict.keys():
+        label_mask[mask == k] = mapping_dict[k]
+    return label_mask
 
 
 def get_transforms(phase: str,
@@ -91,6 +97,7 @@ class SemanticSegmentationDataset(Dataset):
         self.std = tuple(config.dataset.std) if std is None else (std,)
         self.height = config.dataset.height if height is None else height
         self.width = config.dataset.width if width is None else width
+        self.mapping_dict = config.dataset.mapping_dict
 
         # Data paths and transformations
         self.data_paths = data_paths
@@ -112,17 +119,16 @@ class SemanticSegmentationDataset(Dataset):
                                     std=self.std)
         image = preprocessor.preprocess_image()
 
-        if self.phase == "test":
-            mask = np.zeros((image.shape[0], image.shape[1]))
-        else:
-            mask = preprocessor.preprocess_mask()
-            # Removed: mask = mask.astype(float) to keep mask as integer type
+        mask = np.load(image_path.replace('image', 'label'))
+        # Removed: mask = mask.astype(float) to keep mask as integer type
 
         augmented = self.transforms(image=image, mask=mask)
         image = augmented['image']
-
+        mask = augmented['mask']
+        # Apply remapping after augmentations and ToTensorV2
+        mask = encode_labels(mask, self.mapping_dict)
         # Explicitly convert mask to LongTensor for CrossEntropyLoss
-        mask = augmented['mask'].long()
+        mask = torch.Tensor(mask).long()
 
         return image, mask
 

@@ -58,7 +58,7 @@ def main(config_path,
 
     evaluator = Evaluator(
         config=config,
-        model_path=Path("runs/best_model.pth"),
+        model_path=Path("runs/best_model_epoch76_0.6119.pth"),
         val_loader=val_loader,
         output_name=output_name,
         save_flag=save_flag
