@@ -82,3 +82,50 @@ The full mapping dictionary is provided in `config.yaml`.
 Results and visual examples are in the `results/` directory.
 
 ---
+
+## 🧩 How to Run
+
+### 1. Install dependencies
+
+```shell
+pip install -r requirements.txt
+```
+
+### 2. Update paths in config.yaml
+
+Set dataset paths, image size, mapping dictionary, and training parameters.
+
+### 3. Train the model
+```shell
+python train.py --config config.yaml
+```
+
+### 4. Evaluate the model
+```shell
+python evaluate.py --config config.yaml
+```
+
+### 5. Run inference
+```shell
+python inference.py --config config.yaml --image path/to/image.png
+```
+
+---
+
+## 🖼️ Example Results
+
+Coming soon
+
+---
+
+## 📜 License
+
+MIT License
+
+## 🙏 Acknowledgements
+
+* Dataset: Cityscapes Depth & Segmentation (Kaggle)
+
+* PyTorch community
+
+* Cityscapes dataset creators for class definitions
