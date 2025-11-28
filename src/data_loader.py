@@ -19,11 +19,15 @@ warnings.filterwarnings("ignore")
 
 
 def create_data_paths(dir: Path,
-                      df: pd.DataFrame) -> list[Path]:
+                      df: pd.DataFrame = None) -> list[Path]:
     """Creates a list of image files from the dataset directory."""
-    df = pd.DataFrame(data=[os.path.join(dir, df['image_path'].values[i]) for i in range(len(df))],
-                      columns=['image_path'])
-    return df['image_path'].values.tolist()
+    if df is None:
+        paths = [os.path.join(dir, f) for f in os.listdir(dir) if f.endswith('.npy')]
+    else:
+        df = pd.DataFrame(data=[os.path.join(dir, df['image_path'].values[i]) for i in range(len(df))],
+                          columns=['image_path'])
+        paths = df['image_path'].values.tolist()
+    return paths
 
 
 def encode_labels(mask: np.ndarray, mapping_dict: dict) -> np.ndarray:
