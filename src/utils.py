@@ -88,24 +88,6 @@ def set_device() -> torch.device:
     return device
 
 
-def create_video_output(cap: cv2.VideoCapture,
-                        config: OmegaConf,
-                        predicted_masks: np.ndarray,
-                        output_path: str = "output_video.avi") -> None:
-    color_map = config.dataset.color_map
-    frame_width = config.dataset.width
-    frame_height = config.dataset.height
-    fps = cap.get(cv2.CAP_PROP_FPS)
-    fourcc = cv2.VideoWriter_fourcc(*"XVID")
-    output = cv2.VideoWriter(output_path, fourcc, fps, (frame_width, frame_height))
-    # save predicted masks
-    for i in tqdm(range(predicted_masks.shape[0])):
-        color_frame = mask_to_rgb(np.array(predicted_masks, dtype=np.uint8)[i],
-                                  color_map)
-        output.write(color_frame)
-    output.release()
-
-
 def load_image(file_path: Path) -> np.ndarray:
     """Read an image from a file."""
     if file_path.endswith('.npy'):

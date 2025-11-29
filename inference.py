@@ -6,8 +6,8 @@ from omegaconf import OmegaConf
 from pathlib import Path
 
 from src.data_loader import DataGenerator, create_data_paths
-from src.prediction import SceneSegmentor, VideoProcessor
-from src.utils import create_video_output
+from src.prediction import SceneSegmentor
+from src.video_utils import VideoProcessor, VideoWriter
 from src.visualization import SegmentationVisualizer
 
 
@@ -82,10 +82,10 @@ def main(config_path: Path,
                 test_generator=test_loader,
             )
         predicted_masks = segmentor.run()
-        create_video_output(video_processor.cap,
-                            config=config,
-                            predicted_masks=predicted_masks,
-                            output_path="output_video.avi")
+        video_writer = VideoWriter(config=config,
+                                   cap=video_processor.cap,
+                                   output_path="output_video.avi")
+        video_writer.run(predicted_masks)
 
 
 if __name__ == '__main__':

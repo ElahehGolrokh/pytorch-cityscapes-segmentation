@@ -3,6 +3,11 @@ import numpy as np
 
 from pathlib import Path
 
+from omegaconf import OmegaConf
+from tqdm import tqdm
+
+from .utils import mask_to_rgb
+
 
 class VideoProcessor:
     def __init__(self,
@@ -32,6 +37,42 @@ class VideoProcessor:
             # Process the frame
             np_frame = np.array(frame)/255
             video_frames.append(np_frame)
-            
+
         print(f'frames length: {len(video_frames)}')
         return video_frames
+
+
+class VideoWriter:
+    def __init__(self,
+                 config: OmegaConf,
+                 cap: cv2.VideoCapture,
+                 output_path: str):
+        self.output_path = output_path
+        self.writer = None
+        self.fps = cap.get(cv2.CAP_PROP_FPS)
+
+        # Parameters from config
+        self.color_map = config.dataset.color_map
+        self.frame_width = config.dataset.width
+        self.frame_height = config.dataset.height
+    
+    def run(self, masks) -> None:
+        self._open()
+        self._write_masks(masks)
+        self._release()
+    
+    def _open(self):
+        fourcc = cv2.VideoWriter_fourcc(*"XVID")
+        self.writer = cv2.VideoWriter(
+            self.output_path, fourcc, self.fps, (self.frame_width, self.frame_height)
+        )
+    
+    def _write_masks(self, masks):
+        """Write batch of masks as RGB frames"""
+        for mask in tqdm(masks):
+            rgb_frame = mask_to_rgb(np.array(mask, dtype=np.uint8), self.color_map)
+            self.writer.write(rgb_frame)
+    
+    def _release(self):
+        if self.writer:
+            self.writer.release()
