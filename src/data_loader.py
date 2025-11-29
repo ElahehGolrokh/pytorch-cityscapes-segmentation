@@ -33,18 +33,6 @@ def create_data_paths(dir: Path,
     return paths
 
 
-def encode_labels(mask: np.ndarray, mapping_dict: dict) -> np.ndarray:
-    """
-    Encodes the labels in the mask using the mapping dictionary.
-    This function converts the original label values (-1 to 19) to the new
-    values defined in the mapping dictionary from 0 to 10.
-    """
-    label_mask = np.zeros_like(mask)
-    for k in mapping_dict.keys():
-        label_mask[mask == k] = mapping_dict[k]
-    return label_mask
-
-
 def get_transforms(phase: str,
                    height: int,
                    width: int) -> Compose:
@@ -167,6 +155,18 @@ class SemanticSegmentationDataset(Dataset):
         mask = torch.Tensor(mask).long()
 
         return image, mask
+    
+    @staticmethod
+    def encode_labels(mask: np.ndarray, mapping_dict: dict) -> np.ndarray:
+        """
+        Encodes the labels in the mask using the mapping dictionary.
+        This function converts the original label values (-1 to 19) to the new
+        values defined in the mapping dictionary from 0 to 10.
+        """
+        label_mask = np.zeros_like(mask)
+        for k in mapping_dict.keys():
+            label_mask[mask == k] = mapping_dict[k]
+        return label_mask
 
 
 class DataGenerator:
