@@ -104,3 +104,14 @@ def create_video_output(cap: cv2.VideoCapture,
                                   color_map)
         output.write(color_frame)
     output.release()
+
+
+def load_image(file_path: Path) -> np.ndarray:
+    """Read an image from a file."""
+    if file_path.endswith('.npy'):
+        image = np.load(file_path)
+    else:
+        image = cv2.imread(str(file_path))
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        image = np.asarray(image/255)
+    return image

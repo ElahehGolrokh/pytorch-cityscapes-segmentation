@@ -22,7 +22,10 @@ def create_data_paths(dir: Path,
                       df: pd.DataFrame = None) -> list[Path]:
     """Creates a list of image files from the dataset directory."""
     if df is None:
-        paths = [os.path.join(dir, f) for f in os.listdir(dir) if f.endswith('.npy')]
+        paths = [os.path.join(dir, f) for f in os.listdir(dir)
+                 if f.endswith('.npy') or
+                 f.endswith('.jpg') or
+                 f.endswith('.png')]
     else:
         df = pd.DataFrame(data=[os.path.join(dir, df['image_path'].values[i]) for i in range(len(df))],
                           columns=['image_path'])

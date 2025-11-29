@@ -8,6 +8,7 @@ from pathlib import Path
 from src.data_loader import DataGenerator, create_data_paths
 from src.prediction import SceneSegmentor, VideoProcessor
 from src.utils import create_video_output
+from src.visualization import SegmentationVisualizer
 
 
 parser = argparse.ArgumentParser(description="Inference for a segmentation model")
@@ -25,17 +26,24 @@ parser.add_argument("-vp",
                     type=str,
                     default=None,
                     help="Path to the input video file")
+parser.add_argument("-n",
+                    "--number_of_visualizations",
+                    type=int,
+                    default=None,
+                    help="Number of visualizations to generate")
 args = parser.parse_args()
 
 
 def main(config_path: Path,
          image_path: Path,
-         video_path: Path):
+         video_path: Path,
+         number_of_visualizations: int):
     config = OmegaConf.load(config_path)
     model_path = Path("runs/best_model_epoch76_0.6119_efficientnetb3.pth")
 
     if video_path is None:
         if image_path is None:
+            # If no image path is provided, use the test dataset
             test_dir = os.path.join('data', 'test', 'image')
             test_df = pd.read_csv(os.path.join('data', 'test.csv'))
             paths = create_data_paths(test_dir, test_df)
@@ -54,7 +62,11 @@ def main(config_path: Path,
             model_path=model_path,
             test_generator=test_loader,
         )
-        segmentor.run()
+        predictions = segmentor.run()
+        SegmentationVisualizer(config=config,
+                               images_path=paths,
+                               pr_masks=predictions,
+                               to_visualize_samples=number_of_visualizations).visualize()
     else:
         # Video inference
         video_processor = VideoProcessor(video_path=video_path)
@@ -79,4 +91,5 @@ def main(config_path: Path,
 if __name__ == '__main__':
     main(args.config,
          args.image_path,
-         args.video_path)
+         args.video_path,
+         args.number_of_visualizations)
