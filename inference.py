@@ -39,6 +39,7 @@ def main(config_path: Path,
          video_path: Path,
          number_of_visualizations: int):
     config = OmegaConf.load(config_path)
+    batch_size = config.inference.batch_size
     model_path = Path("runs/best_model_epoch76_0.6119_efficientnetb3.pth")
 
     if video_path is None:
@@ -54,7 +55,7 @@ def main(config_path: Path,
 
         test_loader = DataGenerator(config=config,
                                     phase="test",
-                                    batch_size=len(paths),
+                                    batch_size=batch_size,
                                     shuffle=False).load_data(paths)
 
         segmentor = SceneSegmentor(
@@ -73,7 +74,7 @@ def main(config_path: Path,
         video_frames = video_processor.get_video_frames()
         test_loader = DataGenerator(config=config,
                                     phase="test",
-                                    batch_size=len(video_frames),
+                                    batch_size=batch_size,
                                     shuffle=False).load_data(video_frames=video_frames)
 
         segmentor = SceneSegmentor(

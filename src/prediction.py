@@ -47,11 +47,13 @@ class SceneSegmentor:
         """Run the segmentation on the test dataset."""
         self._setup()
         self.model_.eval()
+        all_masks = []
         with torch.no_grad():
             for test_batch in self.test_loader:
                 test_images = test_batch[0].to(self.device_).float()
                 pr_masks = self._predict(test_images)
-        return pr_masks
+                all_masks.append(pr_masks.cpu())
+        return torch.cat(all_masks, dim=0)
 
     def _setup(self) -> None:
         """Set up the device and model for inference."""

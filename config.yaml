@@ -68,3 +68,6 @@ training:
 evaluation:
   metrics: [iou, f1, precision, recall, accuracy]
   reduction_mode: ["macro", "none"]
+
+inference:
+  batch_size: 16
