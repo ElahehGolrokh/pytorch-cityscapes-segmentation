@@ -4,7 +4,6 @@ import numpy as np
 import torch
 
 from omegaconf import OmegaConf
-from tqdm import tqdm
 
 from .model_building import ModelBuilder
 

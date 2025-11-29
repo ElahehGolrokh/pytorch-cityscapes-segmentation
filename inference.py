@@ -74,7 +74,7 @@ def main(config_path: Path,
         test_loader = DataGenerator(config=config,
                                     phase="test",
                                     batch_size=len(video_frames),
-                                    shuffle=False).load_data(video_frame=video_frames)
+                                    shuffle=False).load_data(video_frames=video_frames)
 
         segmentor = SceneSegmentor(
                 config=config,

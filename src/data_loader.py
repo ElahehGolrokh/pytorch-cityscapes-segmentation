@@ -86,7 +86,7 @@ class SemanticSegmentationDataset(Dataset):
                  config: OmegaConf,
                  phase: str,
                  data_paths: list = None,
-                 video_frame: np.ndarray = None,
+                 video_frames: list[np.ndarray] = None,
                  mean: float = None,
                  std: float = None,
                  height: int = None,
@@ -102,15 +102,15 @@ class SemanticSegmentationDataset(Dataset):
 
         # Data paths and transformations
         self.data_paths = data_paths
-        self.video_frame = video_frame
+        self.video_frames = video_frames
         self.transforms = get_transforms(phase, self.height, self.width)
         self.phase = phase
 
     def __len__(self):
         if self.data_paths is not None:
             return len(self.data_paths)
-        elif self.video_frame is not None:
-            return len(self.video_frame)
+        elif self.video_frames is not None:
+            return len(self.video_frames)
         else:
             raise ValueError("Invalid dataset input.")
 
@@ -141,7 +141,7 @@ class SemanticSegmentationDataset(Dataset):
                                         normalize_flag=True,
                                         mean=self.mean,
                                         std=self.std)
-            video_frame = self.video_frame[idx]
+            video_frame = self.video_frames[idx]
             image = preprocessor.preprocess_image(video_frame)
             mask = np.zeros((image.shape[0], image.shape[1]),
                             dtype=np.uint8)
@@ -200,13 +200,13 @@ class DataGenerator:
 
     def load_data(self,
                   paths: list = None,
-                  video_frame: np.ndarray = None) -> DataLoader:
+                  video_frames: list[np.ndarray] = None) -> DataLoader:
         """
         Loads data for the specified phase.
         """
         dataset = SemanticSegmentationDataset(data_paths=paths,
                                               phase=self.phase,
-                                              video_frame=video_frame,
+                                              video_frames=video_frames,
                                               config=self.config)
         dataloader = DataLoader(dataset,
                                 batch_size=self.batch_size,
