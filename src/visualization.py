@@ -1,10 +1,11 @@
 import matplotlib.pyplot as plt
+import numpy as np
 import torch
 
 from omegaconf import OmegaConf
 from pathlib import Path
 
-from .utils import load_image
+from .utils import load_image, mask_to_rgb
 
 
 class SegmentationVisualizer:
@@ -23,14 +24,13 @@ class SegmentationVisualizer:
         Visualize the original images and their predicted masks.
         Save the visualizations to the logs directory defined in the config.
         """
+        color_map = self.config.dataset.color_map
         for idx, (image_path, pr_mask) in enumerate(zip(self.images_path, self.pr_masks)):
             if self.to_visualize_samples is not None and idx > self.to_visualize_samples:
                 break
 
             image = load_image(image_path)
-
-            # post-process the image
-            # denormalized_image = denormalize_image(self.config, image)
+            rgb_frame = mask_to_rgb(np.array(pr_mask, dtype=np.uint8), color_map)
 
             plt.figure(figsize=(12, 6))
             # Original Image
@@ -41,7 +41,7 @@ class SegmentationVisualizer:
 
             # Predicted Mask
             plt.subplot(1, 2, 2)
-            plt.imshow(pr_mask)
+            plt.imshow(rgb_frame)
             plt.title("Prediction")
             plt.axis("off")
 

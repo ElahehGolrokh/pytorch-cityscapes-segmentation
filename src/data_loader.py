@@ -150,7 +150,7 @@ class SemanticSegmentationDataset(Dataset):
         image = augmented['image']
         mask = augmented['mask']
         # Apply remapping after augmentations and ToTensorV2
-        mask = encode_labels(mask, self.mapping_dict)
+        mask = self.encode_labels(mask, self.mapping_dict)
         # Explicitly convert mask to LongTensor for CrossEntropyLoss
         mask = torch.Tensor(mask).long()
 
