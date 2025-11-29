@@ -1,3 +1,4 @@
+import cv2
 import numpy as np
 
 from omegaconf import OmegaConf
@@ -36,19 +37,23 @@ class Preprocessor():
     """
     def __init__(self,
                  config: OmegaConf,
-                 image_path: Path,
                  normalize_flag: bool = False,
                  mean: tuple = None,
-                 std: tuple = None):
+                 std: tuple = None,
+                 image_path: Path = None):
         self.image_path = image_path
         self.config = config
         self.normalize_flag = normalize_flag
         self.mean = mean
         self.std = std
 
-    def preprocess_image(self) -> np.ndarray:
+    def preprocess_image(self, image: np.ndarray = None) -> np.ndarray:
         """Run preprocessing on the image."""
-        image = self._read_image(self.image_path)
+        if image is None:
+            try:
+                image = self._read_image(self.image_path)
+            except Exception as e:
+                raise ValueError(f"Error reading image: {e}")
         image = image.astype(float)
         if self.normalize_flag:
             image = self._normalize(image)
@@ -57,7 +62,12 @@ class Preprocessor():
     @staticmethod
     def _read_image(file_path: Path) -> np.ndarray:
         """Read an image from a file."""
-        image = np.load(file_path)
+        if file_path.endswith('.npy'):
+            image = np.load(file_path)
+        else:
+            image = cv2.imread(str(file_path))
+            image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+            image = np.asarray(image/255)
         return image
 
     def _normalize(self, image: np.ndarray) -> np.ndarray:

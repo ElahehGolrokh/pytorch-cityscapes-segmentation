@@ -93,8 +93,9 @@ class SemanticSegmentationDataset(Dataset):
     """
     def __init__(self,
                  config: OmegaConf,
-                 data_paths: Path,
                  phase: str,
+                 data_paths: list = None,
+                 video_frame: np.ndarray = None,
                  mean: float = None,
                  std: float = None,
                  height: int = None,
@@ -110,26 +111,49 @@ class SemanticSegmentationDataset(Dataset):
 
         # Data paths and transformations
         self.data_paths = data_paths
+        self.video_frame = video_frame
         self.transforms = get_transforms(phase, self.height, self.width)
         self.phase = phase
 
     def __len__(self):
-        return len(self.data_paths)
+        if self.data_paths is not None:
+            return len(self.data_paths)
+        elif self.video_frame is not None:
+            return len(self.video_frame)
+        else:
+            raise ValueError("Invalid dataset input.")
 
     def __getitem__(self, idx):
         """Fetches image, mask pair for the given index."""
         if torch.is_tensor(idx):
             idx = idx.tolist()
-        image_path = self.data_paths[idx]
-        preprocessor = Preprocessor(config=self.config,
-                                    image_path=image_path,
-                                    normalize_flag=True,
-                                    mean=self.mean,
-                                    std=self.std)
-        image = preprocessor.preprocess_image()
 
-        mask = np.load(image_path.replace('image', 'label'))
-        # Removed: mask = mask.astype(float) to keep mask as integer type
+        if self.data_paths is not None:
+            # image processing
+            image_path = self.data_paths[idx]
+            preprocessor = Preprocessor(config=self.config,
+                                        image_path=image_path,
+                                        normalize_flag=True,
+                                        mean=self.mean,
+                                        std=self.std)
+            image = preprocessor.preprocess_image()
+            mask_path = image_path.replace('image', 'label')
+            if 'image' in mask_path and Path(mask_path).exists():
+                mask = np.load(mask_path)
+                # Removed: mask = mask.astype(float) to keep mask as integer type
+            else:
+                mask = np.zeros((image.shape[0], image.shape[1]),
+                                dtype=np.uint8)
+        else:
+            # video frame processing
+            preprocessor = Preprocessor(config=self.config,
+                                        normalize_flag=True,
+                                        mean=self.mean,
+                                        std=self.std)
+            video_frame = self.video_frame[idx]
+            image = preprocessor.preprocess_image(video_frame)
+            mask = np.zeros((image.shape[0], image.shape[1]),
+                            dtype=np.uint8)
 
         augmented = self.transforms(image=image, mask=mask)
         image = augmented['image']
@@ -171,12 +195,15 @@ class DataGenerator:
         self.batch_size = batch_size
         self.shuffle = shuffle
 
-    def load_data(self, paths: list) -> DataLoader:
+    def load_data(self,
+                  paths: list = None,
+                  video_frame: np.ndarray = None) -> DataLoader:
         """
         Loads data for the specified phase.
         """
         dataset = SemanticSegmentationDataset(data_paths=paths,
                                               phase=self.phase,
+                                              video_frame=video_frame,
                                               config=self.config)
         dataloader = DataLoader(dataset,
                                 batch_size=self.batch_size,
