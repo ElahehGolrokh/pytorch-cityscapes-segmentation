@@ -39,19 +39,19 @@ class Preprocessor():
                  config: OmegaConf,
                  normalize_flag: bool = False,
                  mean: tuple = None,
-                 std: tuple = None,
-                 image_path: Path = None):
-        self.image_path = image_path
+                 std: tuple = None):
         self.config = config
         self.normalize_flag = normalize_flag
         self.mean = mean
         self.std = std
 
-    def preprocess_image(self, image: np.ndarray = None) -> np.ndarray:
+    def preprocess_image(self,
+                         image_path: Path = None,
+                         image: np.ndarray = None) -> np.ndarray:
         """Run preprocessing on the image."""
         if image is None:
             try:
-                image = self._read_image(self.image_path)
+                image = self._read_image(image_path)
             except Exception as e:
                 raise ValueError(f"Error reading image: {e}")
         image = image.astype(float)

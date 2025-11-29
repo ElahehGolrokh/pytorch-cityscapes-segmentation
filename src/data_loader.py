@@ -105,6 +105,10 @@ class SemanticSegmentationDataset(Dataset):
         self.video_frames = video_frames
         self.transforms = get_transforms(phase, self.height, self.width)
         self.phase = phase
+        self.preprocessor = Preprocessor(config=self.config,
+                                         normalize_flag=True,
+                                         mean=self.mean,
+                                         std=self.std)
 
     def __len__(self):
         if self.data_paths is not None:
@@ -122,12 +126,7 @@ class SemanticSegmentationDataset(Dataset):
         if self.data_paths is not None:
             # image processing
             image_path = self.data_paths[idx]
-            preprocessor = Preprocessor(config=self.config,
-                                        image_path=image_path,
-                                        normalize_flag=True,
-                                        mean=self.mean,
-                                        std=self.std)
-            image = preprocessor.preprocess_image()
+            image = self.preprocessor.preprocess_image(image_path=image_path)
             mask_path = image_path.replace('image', 'label')
             if 'image' in mask_path and Path(mask_path).exists():
                 mask = np.load(mask_path)
@@ -137,12 +136,8 @@ class SemanticSegmentationDataset(Dataset):
                                 dtype=np.uint8)
         else:
             # video frame processing
-            preprocessor = Preprocessor(config=self.config,
-                                        normalize_flag=True,
-                                        mean=self.mean,
-                                        std=self.std)
             video_frame = self.video_frames[idx]
-            image = preprocessor.preprocess_image(video_frame)
+            image = self.preprocessor.preprocess_image(image=video_frame)
             mask = np.zeros((image.shape[0], image.shape[1]),
                             dtype=np.uint8)
 
