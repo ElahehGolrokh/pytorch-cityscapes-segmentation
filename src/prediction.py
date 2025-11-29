@@ -67,36 +67,3 @@ class SceneSegmentor:
         # Convert logits to predicted class labels; Shape: [batch_size, H, W]
         pr_masks = test_outputs.softmax(dim=1).argmax(dim=1)
         return pr_masks
-
-
-class VideoProcessor:
-    def __init__(self,
-                  video_path: Path):
-        self.video_path = video_path
-
-    def _load_video(self) -> cv2.VideoCapture:
-        """
-        Loads a video file using OpenCV.
-        Args:
-            video_path (str): The path to the video file.
-        Returns:
-            cv2.VideoCapture: The video capture object.
-        """
-        self.cap = cv2.VideoCapture(self.video_path)
-        if not self.cap.isOpened():
-            raise ValueError(f"Error opening video file: {self.video_path}")
-
-    def get_video_frames(self):
-        self._load_video()
-        video_frames = []
-        while self.cap.isOpened():
-            ret, frame = self.cap.read()
-            if not ret:
-                break
-
-            # Process the frame
-            np_frame = np.array(frame)/255
-            video_frames.append(np_frame)
-            
-        print(f'frames length: {len(video_frames)}')
-        return video_frames
