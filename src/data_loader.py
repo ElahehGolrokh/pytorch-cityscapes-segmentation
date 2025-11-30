@@ -27,9 +27,7 @@ def create_data_paths(dir: Path,
                  f.endswith('.jpg') or
                  f.endswith('.png')]
     else:
-        df = pd.DataFrame(data=[os.path.join(dir, df['image_path'].values[i]) for i in range(len(df))],
-                          columns=['image_path'])
-        paths = df['image_path'].values.tolist()
+        paths = [os.path.join(dir, path) for path in df['image_path'].values]
     return paths
 
 
