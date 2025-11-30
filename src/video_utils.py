@@ -6,13 +6,18 @@ from pathlib import Path
 from omegaconf import OmegaConf
 from tqdm import tqdm
 
+from .memory_utils import MemoryMonitor
 from .utils import mask_to_rgb
 
 
 class VideoProcessor:
     def __init__(self,
-                 video_path: Path):
+                 video_path: Path,
+                 memory_threshold: float = 56.0,
+                 check_interval: int = 10):
         self.video_path = video_path
+        self.memory_monitor = MemoryMonitor(threshold=memory_threshold,
+                                            check_interval=check_interval)
 
     def _load_video(self) -> cv2.VideoCapture:
         """
@@ -30,6 +35,11 @@ class VideoProcessor:
         try:
             self._load_video()
             video_frames = []
+
+            # Check memory before starting
+            self.memory_monitor.check(force=True)
+            
+            frame_count = 0
             while self.cap.isOpened():
                 ret, frame = self.cap.read()
                 if not ret:
@@ -38,13 +48,30 @@ class VideoProcessor:
                 # Process the frame
                 np_frame = np.array(frame)/255
                 video_frames.append(np_frame)
+                frame_count += 1
+
+                # ✅ Memory check - will raise MemoryError if threshold exceeded
+                self.memory_monitor.check()
             fps = self.cap.get(cv2.CAP_PROP_FPS)
+            # Final memory check
+            mem_info = self.memory_monitor.get_current_usage()
+            print(f"  Final memory usage: {mem_info['percent']:.1f}% ({mem_info['used_gb']:.1f}GB)\n")
             print(f'frames length: {len(video_frames)}')
             return fps, video_frames
+        except MemoryError as e:
+            # Memory limit exceeded - clean up and re-raise
+            print(f"\n❌ Memory limit exceeded after loading {frame_count} frames")
+            print(f"   {str(e)}")
+            print(f"   Loaded frames so far: {len(video_frames)}")
+            print(f"   Consider: reducing video resolution or processing in chunks\n")
+            raise  # Re-raise to stop execution
         except Exception as e:
             raise ValueError(f"Error processing video {self.video_path}: {e}") from e
         finally:
             self.cap.release()
+            # Final memory check
+            mem_info = self.memory_monitor.get_current_usage()
+            print(f"  Memory usage: {mem_info['percent']:.1f}% ({mem_info['used_gb']:.1f}GB)")
 
 
 class VideoWriter:
