@@ -27,20 +27,24 @@ class VideoProcessor:
             raise ValueError(f"Error opening video file: {self.video_path}")
 
     def get_video_frames(self):
-        self._load_video()
-        video_frames = []
-        while self.cap.isOpened():
-            ret, frame = self.cap.read()
-            if not ret:
-                break
+        try:
+            self._load_video()
+            video_frames = []
+            while self.cap.isOpened():
+                ret, frame = self.cap.read()
+                if not ret:
+                    break
 
-            # Process the frame
-            np_frame = np.array(frame)/255
-            video_frames.append(np_frame)
-        fps = self.cap.get(cv2.CAP_PROP_FPS)
-        self.cap.release()
-        print(f'frames length: {len(video_frames)}')
-        return fps, video_frames
+                # Process the frame
+                np_frame = np.array(frame)/255
+                video_frames.append(np_frame)
+            fps = self.cap.get(cv2.CAP_PROP_FPS)
+            print(f'frames length: {len(video_frames)}')
+            return fps, video_frames
+        except Exception as e:
+            raise ValueError(f"Error processing video {self.video_path}: {e}") from e
+        finally:
+            self.cap.release()
 
 
 class VideoWriter:
