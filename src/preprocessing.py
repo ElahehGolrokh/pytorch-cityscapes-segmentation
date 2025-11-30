@@ -1,8 +1,9 @@
-import cv2
 import numpy as np
 
 from omegaconf import OmegaConf
 from pathlib import Path
+
+from .utils import load_image
 
 
 class Preprocessor():
@@ -19,7 +20,6 @@ class Preprocessor():
 
     Private_Methods:
     -----------------
-        _read_image
         _normalize
 
     Public_Methods:
@@ -29,11 +29,10 @@ class Preprocessor():
     Example:
     --------
     >>> preprocessor = Preprocessor(config,
-                                    image_path,
                                     normalize_flag=True,
                                     mean=(0.5,),
                                     std=(0.5,))
-    >>> processed_image = preprocessor.preprocess_image()
+    >>> processed_image = preprocessor.preprocess_image(image_path=image_path)
     """
     def __init__(self,
                  config: OmegaConf,
@@ -51,23 +50,12 @@ class Preprocessor():
         """Run preprocessing on the image."""
         if image is None:
             try:
-                image = self._read_image(image_path)
+                image = load_image(image_path)
             except Exception as e:
                 raise ValueError(f"Error reading image from {image_path}: {e}") from e
         image = image.astype(float)
         if self.normalize_flag:
             image = self._normalize(image)
-        return image
-
-    @staticmethod
-    def _read_image(file_path: Path) -> np.ndarray:
-        """Read an image from a file."""
-        if file_path.endswith('.npy'):
-            image = np.load(file_path)
-        else:
-            image = cv2.imread(str(file_path))
-            image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-            image = np.asarray(image/255)
         return image
 
     def _normalize(self, image: np.ndarray) -> np.ndarray:
