@@ -71,7 +71,7 @@ def main(config_path: Path,
     else:
         # Video inference
         video_processor = VideoProcessor(video_path=video_path)
-        video_frames = video_processor.get_video_frames()
+        fps, video_frames = video_processor.get_video_frames()
         test_loader = DataGenerator(config=config,
                                     phase="test",
                                     batch_size=batch_size,
@@ -84,7 +84,7 @@ def main(config_path: Path,
             )
         predicted_masks = segmentor.run()
         video_writer = VideoWriter(config=config,
-                                   cap=video_processor.cap,
+                                   fps=fps,
                                    output_path="output_video.avi")
         video_writer.run(predicted_masks)
 

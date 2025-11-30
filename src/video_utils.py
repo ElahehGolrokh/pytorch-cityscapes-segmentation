@@ -37,19 +37,20 @@ class VideoProcessor:
             # Process the frame
             np_frame = np.array(frame)/255
             video_frames.append(np_frame)
-
+        fps = self.cap.get(cv2.CAP_PROP_FPS)
+        self.cap.release()
         print(f'frames length: {len(video_frames)}')
-        return video_frames
+        return fps, video_frames
 
 
 class VideoWriter:
     def __init__(self,
                  config: OmegaConf,
-                 cap: cv2.VideoCapture,
+                 fps: float,
                  output_path: str):
         self.output_path = output_path
         self.writer = None
-        self.fps = cap.get(cv2.CAP_PROP_FPS)
+        self.fps = fps
 
         # Parameters from config
         self.color_map = config.dataset.color_map
@@ -69,6 +70,7 @@ class VideoWriter:
     
     def _write_masks(self, masks):
         """Write batch of masks as RGB frames"""
+        print('writing masks...')
         for mask in tqdm(masks):
             rgb_frame = mask_to_rgb(np.array(mask, dtype=np.uint8), self.color_map)
             self.writer.write(rgb_frame)

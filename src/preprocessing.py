@@ -53,7 +53,7 @@ class Preprocessor():
             try:
                 image = self._read_image(image_path)
             except Exception as e:
-                raise ValueError(f"Error reading image: {e}")
+                raise ValueError(f"Error reading image from {image_path}: {e}") from e
         image = image.astype(float)
         if self.normalize_flag:
             image = self._normalize(image)
