@@ -206,5 +206,5 @@ class DataGenerator:
         dataloader = DataLoader(dataset,
                                 batch_size=self.batch_size,
                                 shuffle=self.shuffle,
-                                num_workers=os.cpu_count())
+                                num_workers=min(8, os.cpu_count()))
         return dataloader
