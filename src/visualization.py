@@ -12,10 +12,12 @@ class SegmentationVisualizer:
     def __init__(self,
                  config: OmegaConf,
                  images_path: list[Path],
+                 logs_dir: Path,
                  pr_masks: torch.Tensor,
                  to_visualize_samples: int):
         self.config = config
         self.images_path = images_path
+        self.logs_dir = logs_dir
         self.pr_masks = pr_masks
         self.to_visualize_samples = to_visualize_samples
 
@@ -45,7 +47,5 @@ class SegmentationVisualizer:
             plt.title("Prediction")
             plt.axis("off")
 
-            logs_dir = self.config.dirs.logs
-            Path(logs_dir).mkdir(parents=True, exist_ok=True)
-            plt.savefig(f"{logs_dir}/visualization_{idx}.png")
+            plt.savefig(f"{self.logs_dir}/visualization_{idx}.png")
             plt.close()

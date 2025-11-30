@@ -38,9 +38,12 @@ def main(config_path: Path,
          image_path: Path,
          video_path: Path,
          number_of_visualizations: int):
+    # Load configuration
     config = OmegaConf.load(config_path)
     batch_size = config.inference.batch_size
     model_path = Path("runs/best_model_epoch76_0.6119_efficientnetb3.pth")
+    logs_dir = config.dirs.logs
+    Path(logs_dir).mkdir(parents=True, exist_ok=True)
 
     if video_path is None:
         if image_path is None:
@@ -66,6 +69,7 @@ def main(config_path: Path,
         predictions = segmentor.run()
         SegmentationVisualizer(config=config,
                                images_path=paths,
+                               logs_dir=logs_dir,
                                pr_masks=predictions,
                                to_visualize_samples=number_of_visualizations).visualize()
     else:
@@ -83,9 +87,10 @@ def main(config_path: Path,
                 test_generator=test_loader,
             )
         predicted_masks = segmentor.run()
+        output_path = f"{logs_dir}/output_video.avi"
         video_writer = VideoWriter(config=config,
                                    fps=fps,
-                                   output_path="output_video.avi")
+                                   output_path=output_path)
         video_writer.run(predicted_masks)
 
 
