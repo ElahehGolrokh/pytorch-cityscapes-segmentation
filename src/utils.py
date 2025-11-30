@@ -21,7 +21,10 @@ def denormalize_image(config: OmegaConf,
     std = torch.tensor(config.dataset.std)
     img_to_show_normalized = image.cpu()
     # mean and std should be reshaped to (3, 1, 1) for broadcasting across channels
-    img_to_show_denormalized = img_to_show_normalized * std.view(3, 1, 1) + mean.view(3, 1, 1)
+    num_channels = image.shape[0]
+    mean = mean.view(num_channels, 1, 1)
+    std = std.view(num_channels, 1, 1)
+    img_to_show_denormalized = img_to_show_normalized * std + mean
     # Clamp values to [0, 1] range to ensure valid display by matplotlib
     img_to_show_clamped = torch.clamp(img_to_show_denormalized, 0, 1)
     # Permute from (C, H, W) to (H, W, C) for matplotlib
