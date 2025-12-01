@@ -1,131 +1,129 @@
-# Cityscapes Semantic Segmentation (PyTorch)
+# 🚀 Cityscapes Semantic Segmentation (PyTorch)
 
-This project implements a complete **semantic segmentation pipeline in PyTorch** using a Cityscapes-style dataset from Kaggle:
+PyTorch implementation of semantic segmentation for urban scenes using a Cityscapes-style dataset.
 
-**Dataset:**  
-https://www.kaggle.com/datasets/sakshaymahna/cityscapes-depth-and-segmentation/data
-
-The project includes:
-
-- Data preprocessing  
-- Class remapping from **19 original classes** to **10 merged classes**
-- Model training  
-- Evaluation  
-- Inference and visualization  
+**Dataset:** [Kaggle - Cityscapes Depth & Segmentation](https://www.kaggle.com/datasets/sakshaymahna/cityscapes-depth-and-segmentation/data)
 
 ---
 
-## 🚀 Project Overview
+## 🔑 Key Features
 
-The original dataset provides **19 semantic classes**.  
-However, training a segmentation model on all 19 classes produced **poor performance**, mainly due to:
-
-- Severe class imbalance  
-- Very small or rare classes  
-- Missing classes in many scenes  
-- Inconsistent annotation density
-
-To improve results, I analyzed the **pixel distribution of all masks** and merged several rare or similar classes, producing a **10-class mapping**.  
-This significantly improved stability and model accuracy.
+- **Class remapping:** 19 → 10 classes to address severe class imbalance
+- **Flexible inference:** Single images, directories, or videos
+- **Memory monitoring:** Automatic stopping when RAM threshold exceeded
+- **Comprehensive evaluation:** Per-class and aggregate metrics (IoU, F1, precision, recall)
+- **Modular design:** Separate modules for training, evaluation, and inference
 
 ---
 
-## 🗺️ Class Mapping (19 → 10 Classes)
-
-Some examples:
-
-- `sidewalk` merged into road-like category  
-- `wall`, `fence`, `building` merged into a single “structure” category  
-- `traffic_light` + `traffic_sign` merged into “traffic_object”  
-- All large vehicles (`truck`, `bus`, `train`) merged into a single “large vehicle” class  
-- `bicycle` mapped to background due to 0 frequency
-
-The full mapping dictionary is provided in `config.yaml`.
+## 💻 Code and Resources Used
+- **Python Version**: 3.10.14 
+- **Packages**: PyTorch, segmentation-models-pytorch, albumentations, opencv-python, psutil (for memory monitoring)
 
 ---
 
-## ✨ Features
-
-### **Data Preprocessing**
-- Loading images and masks  
-- Custom class remapping  
-- Statistical normalization  
-- Data augmentation pipeline  
-- Dataset-wide class distribution analysis
-
-### **Model Training**
-- PyTorch-based training loop  
-- Configurable architecture (UNet with arbitrary backbone)  
-- Learning rate scheduling  
-- Checkpointing and logging
-
-### **Evaluation**
-- Pixel accuracy  
-- Class IoU  
-- Mean IoU (mIoU)  
-
-### **Inference**
-- Single-image prediction  
-- Batch prediction  
-- Overlay visualization  
-- Color-encoded segmentation masks  
-
----
-
-## 📊 Results Summary
-
-**10-Class Model Significantly improved mIoU**  
-- More stable training  
-- Better generalization  
-- Cleaner segmentation outputs  
-
-Results and visual examples are in the `results/` directory.
-
----
-
-## 🧩 How to Run
-
-### 1. Install dependencies
-
-```shell
+## ⚙️ Installation
+```bash
 pip install -r requirements.txt
 ```
 
-### 2. Update paths in config.yaml
+---
 
-Set dataset paths, image size, mapping dictionary, and training parameters.
+## 📌 Quick Start
 
-### 3. Train the model
-```shell
+### Training
+```bash
 python train.py --config config.yaml
 ```
 
-### 4. Evaluate the model
-```shell
+### Evaluation
+```bash
 python evaluate.py --config config.yaml
 ```
 
-### 5. Run inference
-```shell
-python inference.py --config config.yaml --image path/to/image.png
+### Inference
+
+**Single image:**
+```bash
+python inference.py --config config.yaml --image-path path/to/image.png
+```
+
+**Image directory:**
+```bash
+python inference.py --config config.yaml --image-path path/to/images/
+```
+
+**Video with memory monitoring:**
+```bash
+python inference.py --config config.yaml --video-path video.mp4 --memory-threshold 80
 ```
 
 ---
 
-## 🖼️ Example Results
-
-Coming soon
+## 📦 Project Structure
+```
+├── src/
+│   ├── data_loader.py       # Dataset and data loading
+│   ├── preprocessing.py     # Image preprocessing
+│   ├── model_building.py    # Model architecture
+│   ├── training.py          # Training loop
+│   ├── evaluating.py        # Metrics calculation
+│   ├── prediction.py        # Inference engine
+│   ├── visualization.py     # Result visualization
+│   ├── video_utils.py       # Video I/O
+│   ├── memory_utils.py      # Memory monitoring
+│   └── utils.py             # Helper functions
+├── train.py                 # Training script
+├── evaluate.py              # Evaluation script
+├── inference.py             # Inference script
+└── config.yaml              # Configuration file
+```
 
 ---
 
-## 📜 License
+## 🔍 Class Mapping Rationale
 
-MIT License
+The original 19-class dataset suffered from:
+- Severe class imbalance
+- Rare/missing classes in many scenes
+- Poor model convergence
 
-## 🙏 Acknowledgements
+**Solution:** Merged similar/rare classes into 10 categories which are much more balanced:
+- `sidewalk` → road surface
+- `wall`, `fence`, `building` → structures
+- `traffic_light`, `traffic_sign` → traffic objects
+- `truck`, `bus`, `train` → large vehicles
+- Rare classes (`bicycle`) → background
 
-* Dataset: Cityscapes Depth & Segmentation (Kaggle)
+Full mapping in `config.yaml`.
 
-* PyTorch community
+---
 
-* Cityscapes dataset creators for class definitions
+## ⚙️ Configuration
+
+Edit `config.yaml` to customize:
+- Dataset paths and class mapping
+- Model architecture (backbone of the UNet model)
+- Training hyperparameters (lr, batch size, epochs)
+- Inference options (batch size, memory threshold)
+
+---
+
+## ⚖️ License
+
+This project is open-source and distributed under the **MIT License**.  
+Feel free to use, modify, and share it for research or personal projects.
+
+---
+
+## 🙌 Acknowledgements
+
+- [Cityscapes Depth & Segmentation Dataset](https://www.kaggle.com/datasets/sakshaymahna/cityscapes-depth-and-segmentation/data)
+- [segmentation-models-pytorch](https://github.com/qubvel/segmentation_models.pytorch)
+- PyTorch community
+
+---
+
+**Author:** Elaheh Golrokh  
+📧 For questions or collaboration: [GitHub Profile](https://github.com/elahehgolrokh) <br>
+🌐 To see portfolio & other projects [click here](https://github.com/elahehgolrokh)
