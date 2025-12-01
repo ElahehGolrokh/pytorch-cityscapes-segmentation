@@ -38,8 +38,16 @@ python train.py --config config.yaml
 
 ### Evaluation
 ```bash
-python evaluate.py --config config.yaml
+python evaluate.py --config config.yaml -s --report training.epochs
 ```
+
+**Arguments for `evaluate.py`:**
+
+| Short | Long        | Description | Default |
+|-------|------------|-------------|--------|
+| `-s`  | `--save_flag`  | specifies whether to save evaluation metrics| False
+| `-on`  | `--output_name`  | Name of the output file for evaluation metrics| evaluation_metrics.txt |
+| -  | `--report`    | List of config keys to add to the saved report. Example: training.batch_size training.lr| None |
 
 ### Inference
 
@@ -57,6 +65,16 @@ python inference.py --config config.yaml --image-path path/to/images/
 ```bash
 python inference.py --config config.yaml --video-path video.mp4 --memory-threshold 80
 ```
+
+**Arguments for `inference.py`:**
+
+| Short | Long        | Description | Default |
+|-------|------------|-------------|--------|
+| `-ip`  | `--image-path`  | Path to the input image file or the directory containing images| None
+| `-vp`  | `--video-path`  | Path to the input video file| None |
+| `-n`  | `--number_of_visualizations`    | Number of visualizations to generate for image inference | None |
+| `-mt`  | `--memory-threshold`    | Memory usage threshold for processing video | 80.0 |
+
 
 ---
 
