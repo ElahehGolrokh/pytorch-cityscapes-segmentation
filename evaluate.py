@@ -16,7 +16,8 @@ parser.add_argument("--config",
                     type=str,
                     default="config.yaml",
                     help="Path to the config file")
-parser.add_argument("--output_name",
+parser.add_argument("-on",
+                    "--output_name",
                     type=str,
                     default="evaluation_metrics.txt",
                     help="Name of the output file for evaluation metrics")
@@ -58,7 +59,7 @@ def main(config_path,
 
     evaluator = Evaluator(
         config=config,
-        model_path=Path("runs/best_model_epoch76_0.6119.pth"),
+        model_path=Path("runs/best_model_epoch76_0.6119_efficientnetb3.pth"),
         test_loader=test_loader,
         output_name=output_name,
         save_flag=save_flag

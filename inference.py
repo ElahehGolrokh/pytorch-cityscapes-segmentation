@@ -34,7 +34,7 @@ parser.add_argument("-n",
 parser.add_argument("-mt",
                     "--memory-threshold",
                     type=float,
-                    default=80.0,
+                    default=90.0,
                     help="Memory usage threshold for processing video")
 args = parser.parse_args()
 

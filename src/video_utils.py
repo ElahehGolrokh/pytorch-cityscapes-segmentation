@@ -13,7 +13,7 @@ from .utils import mask_to_rgb
 class VideoProcessor:
     def __init__(self,
                  video_path: Path,
-                 memory_threshold: float = 56.0,
+                 memory_threshold: float = 80.0,
                  check_interval: int = 10):
         self.video_path = video_path
         self.memory_monitor = MemoryMonitor(threshold=memory_threshold,
